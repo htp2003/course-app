@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { Layout, Button, theme } from "antd";
-import {
-  LeftOutlined,
-  RightOutlined,
-} from "@ant-design/icons";
+import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { AppSidebar } from "./app-sidebar";
 import { Outlet } from "react-router-dom";
 
@@ -17,12 +14,9 @@ export const MainLayout = () => {
 
   return (
     <Layout className="min-h-screen">
-      {/* 1. Sidebar bên trái */}
       <AppSidebar collapsed={collapsed} />
 
-      {/* 2. Phần nội dung bên phải */}
       <Layout style={{ minHeight: "100vh" }}>
-        {/* Header */}
         <Header
           style={{ padding: 0, background: colorBgContainer }}
           className="flex items-center justify-between px-4 shadow-sm z-10"
@@ -36,7 +30,6 @@ export const MainLayout = () => {
           <div className="mr-4 font-semibold text-gray-600">Admin User</div>
         </Header>
 
-        {/* Content Area - Nơi chứa các page con (Create Course...) */}
         <Content className="m-4 overflow-initial">
           <div
             style={{
@@ -47,13 +40,13 @@ export const MainLayout = () => {
             }}
             className="shadow-sm h-full"
           >
-            {/* Outlet là nơi render nội dung của route con */}
             <Outlet />
           </div>
         </Content>
 
         <Footer style={{ textAlign: "center" }}>
-          LMS System ©{new Date().getFullYear()} Created by Dev Team
+          LMS System ©{new Date().getFullYear()} Created by Tan Phat with
+          assistance from Gemini
         </Footer>
       </Layout>
     </Layout>

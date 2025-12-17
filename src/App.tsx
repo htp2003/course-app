@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { ConfigProvider } from "antd";
 import MainLayoutWrapper from "./app/(main)/layout";
 import CreateCoursePage from "./app/(main)/course-management/create";
+import CourseListPage from "./app/(main)/course-management/list";
 
 function App() {
   return (
@@ -39,6 +40,10 @@ function App() {
           <Route
             path="/course-management/create"
             element={<CreateCoursePage />}
+          />
+          < Route
+            path="/course-management/list"
+            element={<CourseListPage />}
           />
         </Route>
       </Routes>

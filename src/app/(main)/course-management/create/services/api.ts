@@ -112,7 +112,6 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * API Tạo khóa học mới
  */
 export const createCourseAPI = async (payload: TCreateCourseForm) => {
-  console.log(">>> [API POST] Creating Course with payload:", payload);
 
   await delay(1500); // Giả lập chờ 1.5s
 
@@ -132,7 +131,6 @@ export const createCourseAPI = async (payload: TCreateCourseForm) => {
  * Trả về link file giả
  */
 export const uploadFileAPI = async (file: File) => {
-  console.log(">>> [API UPLOAD] Uploading file:", file.name);
 
   await delay(1000);
 
@@ -146,7 +144,6 @@ export const uploadFileAPI = async (file: File) => {
  * API Lấy chi tiết khóa học (Dùng cho trang Edit hoặc Test Load Data)
  */
 export const getCourseDetailAPI = async (id: string) => {
-  console.log(">>> [API GET] Fetching course:", id);
   await delay(500);
   return MOCK_COURSE_DATA;
 };

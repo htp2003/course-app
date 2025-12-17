@@ -10,7 +10,6 @@ export interface TCourseContent {
   chapters: TChapter[];
 }
 
-// Form Request Body hoàn chỉnh
 export interface TCreateCourseForm extends TCourseBasicInfo, TCourseContent {
   status: "draft" | "published";
 }
@@ -18,23 +17,21 @@ export interface TCreateCourseForm extends TCourseBasicInfo, TCourseContent {
 export type TLessonType = "video" | "text" | "quiz" | "document";
 
 export interface TLesson {
-  id: string; // ID duy nhất để tìm kiếm (FE tự tạo)
-  title: string; // Tên bài
-  type: TLessonType; // Hình thức học
+  id: string;
+  title: string;
+  type: TLessonType;
   duration: number;
 
-  // Tài liệu bài học (Video URL hoặc nội dung Text)
   videoUrl?: string;
   content?: string;
 
-  // Tài liệu tham khảo
-  references?: string; // Link hoặc tên file
+  references?: string;
 
-  isFree?: boolean; // Học thử hay không
+  isFree?: boolean;
 }
 
 export interface TChapter {
-  id: string; // ID duy nhất
+  id: string;
   title: string;
   lessons: TLesson[];
 }

@@ -1,5 +1,4 @@
-// src/app/(main)/course-management/create/components/course-wizard.tsx
-import { Steps, Button, Card, theme, Form } from "antd";
+import { Steps, Button, Card, Form } from "antd";
 import { useCourseForm } from "../hooks/use-course-form";
 import {
   InfoCircleOutlined,
@@ -8,18 +7,14 @@ import {
   EyeOutlined,
 } from "@ant-design/icons";
 
-// Import các component con (Placeholder tạm)
 import { StepOneInfo } from "./step-one-info";
 import { StepTwoContent } from "./step-two-content";
 import { StepThreeQuiz } from "./step-three-quiz";
 import { StepFourPreview } from "./step-four-preview";
 
 export const CourseWizard = () => {
-  const { token } = theme.useToken();
-  const { currentStep, next, prev, form, onSubmit, goTo, isSubmitting } =
-    useCourseForm();
+  const { currentStep, next, prev, form, onSubmit, goTo } = useCourseForm();
 
-  // Cấu hình các bước
   const steps = [
     {
       title: "Thông tin chung",
@@ -45,7 +40,6 @@ export const CourseWizard = () => {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Thanh tiến trình */}
       <Card className="mb-6 shadow-sm">
         <Steps
           current={currentStep}
@@ -59,15 +53,11 @@ export const CourseWizard = () => {
         layout="vertical"
         initialValues={{
           level: "beginner",
-          chapters: [], // Khởi tạo mảng chương rỗng
+          chapters: [],
         }}
         preserve={true}
       >
-        <div className="mb-6 min-h-[400px]">
-          {/* Render nội dung bước hiện tại */}
-          {/* Lưu ý: Các file StepOne, StepTwo... giờ sẽ chứa <Form.Item> */}
-          {steps[currentStep].content}
-        </div>
+        <div className="mb-6 min-h-[400px]">{steps[currentStep].content}</div>
       </Form>
 
       <div className="flex justify-end gap-3 pb-8">
@@ -88,7 +78,7 @@ export const CourseWizard = () => {
             type="primary"
             size="large"
             className="bg-green-600 hover:bg-green-500"
-            onClick={onSubmit} // Gọi hàm submit cuối cùng
+            onClick={onSubmit}
           >
             Hoàn tất tạo khóa học
           </Button>

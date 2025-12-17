@@ -6,7 +6,6 @@ const { Dragger } = Upload;
 
 // Hàm chuẩn hóa dữ liệu file cho Antd Upload
 const normFile = (e: any) => {
-  console.log("Upload event:", e);
   if (Array.isArray(e)) {
     return e;
   }
@@ -45,7 +44,6 @@ export const StepOneInfo = () => {
               />
             </Form.Item>
 
-            {/* Fix lỗi initialValue: Xóa initialValue="beginner" ở đây (đã set ở Form cha) */}
             <Form.Item name="level" label="Trình độ">
               <Select size="large">
                 <Select.Option value="beginner">
@@ -82,7 +80,6 @@ export const StepOneInfo = () => {
         </div>
 
         <div className="lg:col-span-1">
-          {/* Fix lỗi value Upload: Thêm valuePropName và getValueFromEvent */}
           <Form.Item
             label="Ảnh bìa khóa học"
             name="thumbnail"

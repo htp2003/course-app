@@ -1,5 +1,3 @@
-import React from "react";
-
 interface Course {
   id: string;
   title: string;

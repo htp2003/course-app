@@ -112,7 +112,6 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  * API Tạo khóa học mới
  */
 export const createCourseAPI = async (payload: TCreateCourseForm) => {
-
   await delay(1500); // Giả lập chờ 1.5s
 
   // Giả lập server trả về
@@ -131,7 +130,6 @@ export const createCourseAPI = async (payload: TCreateCourseForm) => {
  * Trả về link file giả
  */
 export const uploadFileAPI = async (file: File) => {
-
   await delay(1000);
 
   return {
@@ -143,7 +141,7 @@ export const uploadFileAPI = async (file: File) => {
 /**
  * API Lấy chi tiết khóa học (Dùng cho trang Edit hoặc Test Load Data)
  */
-export const getCourseDetailAPI = async (id: string) => {
+export const getCourseDetailAPI = async (_id: string) => {
   await delay(500);
   return MOCK_COURSE_DATA;
 };

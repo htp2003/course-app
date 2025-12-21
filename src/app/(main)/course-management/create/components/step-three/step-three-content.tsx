@@ -12,12 +12,12 @@ export const StepThreeContent = () => {
       <Row gutter={24}>
         <Col span={7} className="hidden md:block">
           <Affix offsetTop={120}>
-            {}
+          
             <QuizSidebarTree onSelectNode={handleSelectNode} />
           </Affix>
         </Col>
         <Col span={17} xs={24} md={17}>
-          {}
+        
           <StepThreeRightPane selectedKey={selectedNodeKey} />
         </Col>
       </Row>

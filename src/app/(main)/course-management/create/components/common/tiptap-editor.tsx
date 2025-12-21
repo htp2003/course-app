@@ -1,4 +1,4 @@
-import { useEffect, useMemo, memo } from "react";
+import { useEffect, useMemo, memo, useTransition } from "react"; // 1. Import useTransition
 import { EditorContent, useEditor } from "@tiptap/react";
 import { RichTextProvider } from "reactjs-tiptap-editor";
 import "reactjs-tiptap-editor/style.css";
@@ -54,6 +54,7 @@ import {
   RichTextBubbleText,
   RichTextBubbleVideo,
 } from "reactjs-tiptap-editor/bubble";
+
 const mockUpload = (files: File) => {
   return new Promise<string>((resolve) => {
     setTimeout(() => {
@@ -61,6 +62,7 @@ const mockUpload = (files: File) => {
     }, 500);
   });
 };
+
 const baseExtensions = [
   Document,
   Text,
@@ -90,6 +92,7 @@ const baseExtensions = [
   Image.configure({ upload: mockUpload }),
   Video.configure({ upload: mockUpload }),
 ];
+
 const CustomToolbar = memo(() => {
   return (
     <div className="flex items-center gap-1 flex-wrap p-2 border-b border-gray-200 bg-gray-50/50 sticky top-0 z-10">
@@ -127,18 +130,22 @@ const CustomToolbar = memo(() => {
     </div>
   );
 });
+
 interface Props {
   value?: string;
   onChange?: (value: string) => void;
   placeholder?: string;
   readOnly?: boolean;
 }
+
 export const TiptapEditor = ({
   value,
   onChange,
   placeholder,
   readOnly = false,
 }: Props) => {
+  const [, startTransition] = useTransition();
+
   const extensions = useMemo(() => {
     return [
       ...baseExtensions,
@@ -147,11 +154,17 @@ export const TiptapEditor = ({
       }),
     ];
   }, [placeholder]);
+
   const editor = useEditor(
     {
       editable: !readOnly,
       content: value,
       extensions: extensions,
+
+      immediatelyRender: false,
+      shouldRerenderOnTransaction: false,
+
+
       editorProps: {
         attributes: {
           class: [
@@ -162,25 +175,33 @@ export const TiptapEditor = ({
       },
       onUpdate: ({ editor }) => {
         if (onChange) {
-          onChange(editor.getHTML());
+
+          startTransition(() => {
+            onChange(editor.getHTML());
+          });
         }
       },
     },
     [extensions, readOnly]
   );
+
   useEffect(() => {
-    if (editor && value !== undefined) {
+
+    if (editor && value !== undefined && !editor.isDestroyed) {
       if (editor.getHTML() !== value) {
         editor.commands.setContent(value);
       }
     }
   }, [value, editor]);
+
   useEffect(() => {
-    if (editor) {
+    if (editor && !editor.isDestroyed) {
       editor.setEditable(!readOnly);
     }
   }, [readOnly, editor]);
+
   if (!editor) return null;
+
   if (readOnly) {
     return (
       <div
@@ -192,6 +213,7 @@ export const TiptapEditor = ({
       />
     );
   }
+
   return (
     <div className="border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm hover:border-blue-400 transition-colors">
       <RichTextProvider editor={editor}>

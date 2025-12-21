@@ -6,24 +6,22 @@ import {
   Card,
   Row,
   Col,
-  Upload,
   Typography,
   Tag,
   Image,
 } from "antd";
 import { DollarOutlined, FileImageOutlined } from "@ant-design/icons";
-import type { UploadChangeParam } from "antd/es/upload";
 import type { UploadFile } from "antd/es/upload/interface";
 import { TiptapEditor } from "../common/tiptap-editor";
 import { COURSE_LEVELS, COURSE_CATEGORIES } from "../../../common/constants";
 import { formatCurrency, getLabelFromValue } from "../../../common/utils";
+import { CommonFileUpload } from "../common/common-file-upload";
+import { UPLOAD_CONFIG } from "../../../common/constants"
+import { normFile } from "../../../common/utils";
 interface Props {
   readOnly?: boolean;
 }
-const normFile = (e: UploadChangeParam | UploadFile[]) => {
-  if (Array.isArray(e)) return e;
-  return e?.fileList;
-};
+
 const currencyFormatter = (value: number | undefined) => {
   return `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
@@ -37,8 +35,12 @@ const getThumbnailUrl = (thumbnailList: UploadFile[]): string => {
   }
   const file = thumbnailList[0];
   if (file.url) return file.url;
-  if (file.originFileObj) return URL.createObjectURL(file.originFileObj);
-  return file.thumbUrl || "";
+  const originFile = file.originFileObj as unknown;
+  if (originFile instanceof Blob || originFile instanceof File) {
+    return URL.createObjectURL(originFile);
+  }
+
+  return file.thumbUrl || "https://placehold.co/600x400?text=No+Image";
 };
 const CourseInfoPreview = () => {
   const form = Form.useFormInstance();
@@ -158,7 +160,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
             />
           </Form.Item>
           <Form.Item name="description" label="Mô tả chi tiết">
-            {}
+
             <TiptapEditor placeholder="Mô tả những gì học viên sẽ đạt được..." />
           </Form.Item>
         </Col>
@@ -169,32 +171,20 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
           >
             <Form.Item
               name="thumbnail"
-              valuePropName="fileList"
               getValueFromEvent={normFile}
               noStyle
             >
-              <Upload.Dragger
-                name="files"
+              <CommonFileUpload
+                accept={UPLOAD_CONFIG.IMAGE.ACCEPT}
+                maxSizeMB={UPLOAD_CONFIG.IMAGE.MAX_SIZE_MB}
+                helperText={UPLOAD_CONFIG.IMAGE.HELPER_TEXT}
+                listType="picture"
+                value={[]}
                 maxCount={1}
-                listType="picture-card"
-                className="bg-gray-50/50 hover:bg-gray-100 transition-colors border-2 border-dashed border-gray-300"
                 height={280}
-                beforeUpload={() => false}
-                accept="image/png, image/jpeg, image/jpg, image/webp"
-                showUploadList={{ showPreviewIcon: false }}
-              >
-                <div className="py-8">
-                  <p className="ant-upload-drag-icon mb-4">
-                    <FileImageOutlined className="text-gray-400 text-5xl" />
-                  </p>
-                  <p className="ant-upload-text font-medium text-gray-600">
-                    Kéo thả hoặc click để tải ảnh
-                  </p>
-                  <p className="ant-upload-hint text-xs text-gray-400 mt-2 px-4">
-                    Hỗ trợ: PNG, JPG, WEBP (Max 5MB)
-                  </p>
-                </div>
-              </Upload.Dragger>
+                icon={<FileImageOutlined className="text-gray-400 text-5xl" />}
+                label="Tải ảnh bìa (16:9)"
+              />
             </Form.Item>
           </Form.Item>
         </Col>

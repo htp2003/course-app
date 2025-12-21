@@ -1,3 +1,6 @@
+import type { UploadChangeParam } from "antd/es/upload";
+import type { UploadFile } from "antd/es/upload/interface";
+
 export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
@@ -48,3 +51,10 @@ export function debounce<F extends (...args: any[]) => unknown>(
     timeout = setTimeout(() => func.apply(this, args as any), wait);
   } as (...args: Parameters<F>) => void;
 }
+
+export const normFile = (e: UploadChangeParam | UploadFile[]) => {
+  if (Array.isArray(e)) {
+    return e;
+  }
+  return e?.fileList;
+};

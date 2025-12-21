@@ -20,7 +20,7 @@ export const StepThreeRightPane = memo(({ selectedKey }: Props) => {
   const [cIdx, lIdx] = selectedKey.split("-").map(Number);
   return (
     <div className="flex flex-col gap-8 pb-20 animate-fade-in">
-      {}
+      
       <LessonQuizGroup chapterIndex={cIdx} lessonIndex={lIdx} />
     </div>
   );

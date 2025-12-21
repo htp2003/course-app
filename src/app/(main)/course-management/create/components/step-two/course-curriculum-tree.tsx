@@ -123,7 +123,7 @@ export const CourseCurriculumTree = () => {
     <>
       <style>{treeNodeStyles}</style>
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-2">
-        {}
+        
         <Form.Item noStyle shouldUpdate={hasStructureChanged}>
           {({ getFieldValue }) => {
             const chapters = getFieldValue("chapters") as IChapter[];

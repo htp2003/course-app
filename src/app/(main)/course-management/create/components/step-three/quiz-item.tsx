@@ -43,7 +43,7 @@ export const QuizItem = memo(
           </Button>
         }
       >
-        {}
+        
         <Form.List name={[quizIndex, "questions"]}>
           {(qFields, { add, remove: removeQ }) => (
             <div className="flex flex-col">

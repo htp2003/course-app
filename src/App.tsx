@@ -1,8 +1,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ConfigProvider } from "antd";
-import MainLayoutWrapper from "./app/(main)/layout";
+import { MainLayout } from "./components/layouts/main-layout";
 import CreateCoursePage from "./app/(main)/course-management/create";
 import CourseListPage from "./app/(main)/course-management/list";
+import { ProtectedRoute } from "./components/auth/protected-route";
+import { LoginPage } from "./app/(auth)/login/page";
 
 function App() {
   return (
@@ -11,7 +13,7 @@ function App() {
         token: {
           colorPrimary: "#4F46E5",
           borderRadius: 8,
-            fontFamily: "'Be Vietnam Pro', sans-serif",
+          fontFamily: "'Be Vietnam Pro', sans-serif",
         },
         components: {
           Layout: {
@@ -29,23 +31,29 @@ function App() {
       }}
     >
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-        <Route element={<MainLayoutWrapper />}>
-          <Route
-            path="/dashboard"
-            element={<div>Dashboard Content Demo</div>}
-          />
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            <Route path="/" element={<Navigate to="/course-management/list" replace />} />
 
-          <Route
-            path="/course-management/create"
-            element={<CreateCoursePage />}
-          />
-          < Route
-            path="/course-management/list"
-            element={<CourseListPage />}
-          />
+            <Route
+              path="/dashboard"
+              element={<div>Dashboard Content Demo</div>}
+            />
+
+            <Route
+              path="/course-management/create"
+              element={<CreateCoursePage />}
+            />
+            <Route
+              path="/course-management/list"
+              element={<CourseListPage />}
+            />
+          </Route>
         </Route>
+
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </ConfigProvider>
   );

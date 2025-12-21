@@ -10,9 +10,10 @@ import {
 import { CourseInfoSection } from "./step-one/course-info-section";
 import { StepTwoContent } from "./step-two/step-two-content";
 import { StepThreeContent } from "./step-three/step-three-content";
+import { StepFourContent } from "./step-four/step-four-content";
 
 export const CourseWizard = () => {
-  const { currentStep, next, prev, form, onSubmit, goTo } = useCourseForm();
+  const { currentStep, next, prev, form, onSubmit, goTo, isSubmitting } = useCourseForm();
 
   const steps = [
     { title: "Thông tin chung", icon: <InfoCircleOutlined /> },
@@ -56,16 +57,14 @@ export const CourseWizard = () => {
           </div>
 
           <div style={{ display: currentStep === 3 ? "block" : "none" }}>
-            <div className="text-center py-20">
-              Step 4: Preview (Coming soon)
-            </div>
+            <StepFourContent />
           </div>
         </div>
       </Form>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg z-50 flex justify-end gap-3 max-w-6xl mx-auto rounded-t-lg ">
         {currentStep > 0 && (
-          <Button onClick={prev} size="large">
+          <Button onClick={prev} size="large" disabled={isSubmitting}>
             Quay lại
           </Button>
         )}
@@ -82,6 +81,7 @@ export const CourseWizard = () => {
             size="large"
             className="bg-green-600 hover:bg-green-500 border-green-600"
             onClick={onSubmit}
+            loading={isSubmitting}
           >
             Hoàn tất
           </Button>

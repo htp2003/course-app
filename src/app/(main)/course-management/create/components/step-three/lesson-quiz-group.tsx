@@ -47,7 +47,7 @@ export const LessonQuizGroup = memo(({ lessonIndex, chapterIndex }: Props) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
       <LessonTitle chapterIndex={chapterIndex} lessonIndex={lessonIndex} />
-      {}
+
       <Form.List name={quizzesPath}>
         {(quizFields, { add, remove }) => (
           <>

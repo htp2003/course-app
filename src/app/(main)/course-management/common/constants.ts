@@ -35,3 +35,21 @@ export const QUESTION_TYPE_MAP = {
   CHOICE: "choice",
   ESSAY: "essay",
 };
+
+export const UPLOAD_CONFIG = {
+  IMAGE: {
+    MAX_SIZE_MB: 5,
+    ACCEPT: "image/png, image/jpeg, image/jpg, image/webp",
+    HELPER_TEXT: "Hỗ trợ: PNG, JPG, WEBP (Max 5MB)",
+  },
+  DOCUMENT: {
+    MAX_SIZE_MB: 20,
+    ACCEPT: ".pdf, .doc, .docx",
+    HELPER_TEXT: "Hỗ trợ: PDF, DOC, DOCX (Max 20MB)",
+  },
+  SLIDE: {
+    MAX_SIZE_MB: 20,
+    ACCEPT: ".ppt, .pptx, .pdf",
+    HELPER_TEXT: "Hỗ trợ: PowerPoint, PDF (Max 20MB)",
+  },
+} as const;

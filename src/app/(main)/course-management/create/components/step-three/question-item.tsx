@@ -77,8 +77,6 @@ export const QuestionItem = memo(
             <span className="font-bold text-blue-600">
               Câu hỏi {qIndex + 1}
             </span>
-            {}
-            {}
             <Form.Item
               name={[qIndex, "type"]}
               noStyle

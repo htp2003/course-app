@@ -2,7 +2,6 @@ import { Layout, Menu } from "antd";
 import {
   DashboardOutlined,
   ReadOutlined,
-  PlusCircleOutlined,
   UnorderedListOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -28,11 +27,6 @@ export const AppSidebar = ({ collapsed }: TAppSidebarProps) => {
       icon: <ReadOutlined />,
       label: "Quản lý khóa học",
       children: [
-        {
-          key: "/course-management/create",
-          icon: <PlusCircleOutlined />,
-          label: "Tạo khóa học",
-        },
         {
           key: "/course-management/list",
           icon: <UnorderedListOutlined />,

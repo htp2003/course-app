@@ -26,9 +26,6 @@ interface Props {
   readOnly?: boolean;
 }
 
-const currencyParser = (value: string | undefined) => {
-  return value ? Number(value.replace(/\D/g, "")) : 0;
-};
 const getThumbnailUrl = (thumbnailList: UploadFile[]): string => {
   if (!thumbnailList || thumbnailList.length === 0) {
     return "https://placehold.co/600x400?text=No+Image";
@@ -132,12 +129,11 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
                 label="Giá bán"
                 rules={[{ required: true, message: "Nhập giá bán" }]}
               >
-                <InputNumber<number>
+                <InputNumber
                   className="w-full"
                   size="large"
                   formatter={(value) => formatCurrency(Number(value))}
-                  parser={currencyParser}
-                  placeholder="0"
+                  placeholder="VD: 100.000"
                   min={0}
                 />
               </Form.Item>
@@ -168,13 +164,17 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
             label="Ảnh bìa khóa học"
             tooltip="Kích thước khuyến nghị: 1280x720 (16:9)"
           >
-            <Form.Item name="thumbnail" getValueFromEvent={normFile} noStyle>
+            <Form.Item
+              name="thumbnail"
+              getValueFromEvent={normFile}
+              noStyle
+              rules={[{ required: true, message: "Vui lòng chọn ảnh bìa" }]}
+            >
               <CommonFileUpload
                 accept={UPLOAD_CONFIG.IMAGE.ACCEPT}
                 maxSizeMB={UPLOAD_CONFIG.IMAGE.MAX_SIZE_MB}
                 helperText={UPLOAD_CONFIG.IMAGE.HELPER_TEXT}
                 listType="picture"
-                value={[]}
                 maxCount={1}
                 height={280}
                 checkRatio={true}

@@ -15,8 +15,17 @@ import { StepThreeContent } from "./step-three/step-three-content";
 import { StepFourContent } from "./step-four/step-four-content";
 
 export const CourseWizard = () => {
-  const { currentStep, next, prev, form, onSubmit, goTo, isSubmitting } =
-    useCourseForm();
+  const {
+    currentStep,
+    maxStep,
+    next,
+    prev,
+    form,
+    onSubmit,
+    goTo,
+    isSubmitting,
+    isEditMode,
+  } = useCourseForm();
 
   const steps = [
     { title: "Thông tin chung", icon: <InfoCircleOutlined /> },
@@ -31,11 +40,17 @@ export const CourseWizard = () => {
         <Steps
           current={currentStep}
           onChange={goTo}
-          items={steps.map((s, index) => ({
-            title: s.title,
-            icon: s.icon,
-            disabled: index > currentStep + 1,
-          }))}
+          items={steps.map((s, index) => {
+            const isDisabled = isEditMode
+              ? false
+              : index > maxStep && index > currentStep + 1;
+
+            return {
+              title: s.title,
+              icon: s.icon,
+              disabled: isDisabled,
+            };
+          })}
           className="course-steps"
         />
       </Card>
@@ -44,9 +59,6 @@ export const CourseWizard = () => {
         form={form}
         layout="vertical"
         initialValues={{
-          level: 1,
-          category: "it",
-          price: 0,
           chapters: [],
         }}
       >

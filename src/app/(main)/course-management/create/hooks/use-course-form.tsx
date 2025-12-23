@@ -14,6 +14,7 @@ const DRAFT_KEY = "course_create_draft_v1";
 
 export const useCourseForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [maxStep, setMaxStep] = useState(0);
   const [form] = Form.useForm<ICreateCourseForm>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -21,11 +22,16 @@ export const useCourseForm = () => {
   const isEditMode = !!courseId;
   const { message } = App.useApp();
 
+  useEffect(() => {
+    if (currentStep > maxStep) {
+      setMaxStep(currentStep);
+    }
+  }, [currentStep, maxStep]);
+
   const { isFetching: isLoadingDetail } = useQuery({
     queryKey: ["course", courseId],
     queryFn: () => getCourseDetailAPI(courseId!),
     enabled: isEditMode,
-    staleTime: 5000,
   });
 
   useEffect(() => {
@@ -62,7 +68,14 @@ export const useCourseForm = () => {
 
   const getFieldsToValidate = (): any[] => {
     if (currentStep === 0) {
-      return ["title", "price", "level", "category", "description"];
+      return [
+        "title",
+        "price",
+        "level",
+        "category",
+        "description",
+        "thumbnail",
+      ];
     }
 
     const chapters = form.getFieldValue("chapters") || [];
@@ -81,7 +94,7 @@ export const useCourseForm = () => {
             paths.push([...lessonPath, "duration"]);
 
             if (less.type === "video") {
-              paths.push([...lessonPath, "videoUrl"]);
+              paths.push([...lessonPath, "videoFile"]);
             } else if (less.type === "document") {
               paths.push([...lessonPath, "docFile"]);
             } else if (less.type === "slide") {
@@ -216,6 +229,7 @@ export const useCourseForm = () => {
 
   return {
     currentStep,
+    maxStep,
     form,
     next,
     prev,

@@ -1,10 +1,15 @@
 import type { UploadChangeParam } from "antd/es/upload";
 import type { UploadFile } from "antd/es/upload/interface";
 
-export const formatCurrency = (amount: number): string => {
+export const formatCurrency = (amount: number | null | undefined): string => {
+  if (!amount || amount === 0) {
+    return "";
+  }
+
   return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
+    style: "decimal",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(amount);
 };
 

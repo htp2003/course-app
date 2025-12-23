@@ -4,7 +4,7 @@ import {
   Tag,
   Typography,
   Popconfirm,
-  message,
+  App,
   Tooltip,
   Badge,
 } from "antd";
@@ -63,6 +63,7 @@ interface ICourseRecord {
 export const CourseList = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { message } = App.useApp();
 
   const { data: courses, isLoading } = useQuery({
     queryKey: ["courses"],

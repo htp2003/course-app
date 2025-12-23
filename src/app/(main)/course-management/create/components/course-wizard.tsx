@@ -9,7 +9,6 @@ import {
   ArrowRightOutlined,
   CheckOutlined,
 } from "@ant-design/icons";
-
 import { CourseInfoSection } from "./step-one/course-info-section";
 import { StepTwoContent } from "./step-two/step-two-content";
 import { StepThreeContent } from "./step-three/step-three-content";
@@ -20,26 +19,10 @@ export const CourseWizard = () => {
     useCourseForm();
 
   const steps = [
-    {
-      title: "Thông tin chung",
-      icon: <InfoCircleOutlined />,
-      content: <CourseInfoSection />,
-    },
-    {
-      title: "Nội dung & Bài học",
-      icon: <FileTextOutlined />,
-      content: <StepTwoContent />,
-    },
-    {
-      title: "Bài kiểm tra",
-      icon: <QuestionCircleOutlined />,
-      content: <StepThreeContent />,
-    },
-    {
-      title: "Xem trước",
-      icon: <EyeOutlined />,
-      content: <StepFourContent />,
-    },
+    { title: "Thông tin chung", icon: <InfoCircleOutlined /> },
+    { title: "Nội dung & Bài học", icon: <FileTextOutlined /> },
+    { title: "Bài kiểm tra", icon: <QuestionCircleOutlined /> },
+    { title: "Xem trước", icon: <EyeOutlined /> },
   ];
 
   return (
@@ -68,15 +51,32 @@ export const CourseWizard = () => {
         }}
       >
         <div className="min-h-[500px]">
-          {steps.map((step, index) => (
-            <div
-              key={index}
-              style={{ display: currentStep === index ? "block" : "none" }}
-              className="animate-fade-in"
-            >
-              {step.content}
+          <div
+            style={{ display: currentStep === 0 ? "block" : "none" }}
+            className="animate-fade-in"
+          >
+            <CourseInfoSection />
+          </div>
+
+          <div
+            style={{ display: currentStep === 1 ? "block" : "none" }}
+            className="animate-fade-in"
+          >
+            <StepTwoContent />
+          </div>
+
+          <div
+            style={{ display: currentStep === 2 ? "block" : "none" }}
+            className="animate-fade-in"
+          >
+            <StepThreeContent />
+          </div>
+
+          {currentStep === 3 && (
+            <div className="animate-fade-in">
+              <StepFourContent />
             </div>
-          ))}
+          )}
         </div>
       </Form>
 

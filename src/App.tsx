@@ -3,6 +3,7 @@ import { ConfigProvider, App as AntdApp } from "antd";
 import { MainLayout } from "./components/layouts/main-layout";
 import CreateCoursePage from "./app/(main)/course-management/create";
 import CourseListPage from "./app/(main)/course-management/list";
+import { CourseDetailPage } from "./app/(main)/course-management/detail/page";
 import { ProtectedRoute } from "./components/auth/protected-route";
 import { LoginPage } from "./app/(auth)/login/page";
 
@@ -52,6 +53,10 @@ function App() {
               <Route
                 path="/course-management/list"
                 element={<CourseListPage />}
+              />
+              <Route
+                path="/course-management/detail/:id"
+                element={<CourseDetailPage />}
               />
             </Route>
           </Route>

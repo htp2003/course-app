@@ -1,46 +1,49 @@
 import { useState, useEffect } from "react";
 import { Form, App, notification } from "antd";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  createCourseAPI,
-  updateCourseAPI,
-  getCourseDetailAPI,
-} from "../services/api";
-import { getErrorMessage } from "../../common/utils";
-import type { ICreateCourseForm } from "../../common/types";
+import dayjs from "dayjs";
+
+import { createCourseAPI, updateCourseAPI } from "../services/api";
+import { getErrorMessage } from "../../common/utils/utils";
+import type { ICreateCourseForm, ILesson } from "../../common/types/types";
+import type { TCourseDetailResponse } from "../../common/types/api-response";
+
+import { mapUiToApiPayload } from "../utils/payload-mapper";
+import { mapApiToUiForm } from "../../common/utils/mapper";
+import { useGetEditData } from "./use-get-edit-data";
 
 const DRAFT_KEY = "course_create_draft_v1";
+
+type TApiDetailData = TCourseDetailResponse["data"];
 
 export const useCourseForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
   const [form] = Form.useForm<ICreateCourseForm>();
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const courseId = searchParams.get("id");
-  const isEditMode = !!courseId;
   const { message } = App.useApp();
 
+  const courseId = searchParams.get("id");
+  const isEditMode = !!courseId;
+
+  const { data: apiData, isFetching: isLoadingDetail } =
+    useGetEditData(courseId);
+
   useEffect(() => {
-    if (currentStep > maxStep) {
-      setMaxStep(currentStep);
+    if (apiData && isEditMode) {
+      const rawData = apiData as unknown as TApiDetailData;
+
+      const uiData = mapApiToUiForm(rawData);
+      form.setFieldsValue(uiData);
     }
+  }, [apiData, isEditMode, form]);
+
+  useEffect(() => {
+    if (currentStep > maxStep) setMaxStep(currentStep);
   }, [currentStep, maxStep]);
-
-  const { isFetching: isLoadingDetail } = useQuery({
-    queryKey: ["course", courseId],
-    queryFn: () => getCourseDetailAPI(courseId!),
-    enabled: isEditMode,
-  });
-
-  useEffect(() => {
-    if (isEditMode && courseId) {
-      getCourseDetailAPI(courseId).then((data) => {
-        if (data) form.setFieldsValue(data);
-      });
-    }
-  }, [isEditMode, courseId, form]);
 
   useEffect(() => {
     if (isEditMode) return;
@@ -48,6 +51,17 @@ export const useCourseForm = () => {
     if (draft) {
       try {
         const { step, data } = JSON.parse(draft);
+
+        if (data.timeRange && Array.isArray(data.timeRange)) {
+          data.timeRange = [dayjs(data.timeRange[0]), dayjs(data.timeRange[1])];
+        }
+
+        if (data.publishAt) {
+          data.publishAt = dayjs(data.publishAt);
+        }
+
+        if (data.thumbnail) delete data.thumbnail;
+
         form.setFieldsValue(data);
         setCurrentStep(step);
       } catch (e) {
@@ -68,14 +82,29 @@ export const useCourseForm = () => {
 
   const getFieldsToValidate = (): any[] => {
     if (currentStep === 0) {
-      return [
+      const timeStateType = form.getFieldValue("timeStateType");
+      const isHasBadge = form.getFieldValue("isHasBadge");
+
+      const baseFields = [
         "title",
-        "price",
-        "level",
         "category",
         "description",
         "thumbnail",
+        "type",
+        "publishAt",
+        "isHasBadge",
+        "isLearnInOrder",
       ];
+
+      if (timeStateType === 1) {
+        baseFields.push("timeRange");
+      }
+
+      if (isHasBadge === 1) {
+        baseFields.push("courseBadgeFile");
+      }
+
+      return baseFields;
     }
 
     const chapters = form.getFieldValue("chapters") || [];
@@ -83,19 +112,17 @@ export const useCourseForm = () => {
 
     if (currentStep === 1) {
       paths.push("chapters");
-
       chapters.forEach((chap: any, cIdx: number) => {
         paths.push(["chapters", cIdx, "title"]);
-
         if (chap.lessons) {
-          chap.lessons.forEach((less: any, lIdx: number) => {
+          chap.lessons.forEach((less: ILesson, lIdx: number) => {
             const lessonPath = ["chapters", cIdx, "lessons", lIdx];
+
             paths.push([...lessonPath, "title"]);
             paths.push([...lessonPath, "duration"]);
+            paths.push([...lessonPath, "type"]);
 
-            if (less.type === "video") {
-              paths.push([...lessonPath, "videoFile"]);
-            } else if (less.type === "document") {
+            if (less.type === "document") {
               paths.push([...lessonPath, "docFile"]);
             } else if (less.type === "slide") {
               paths.push([...lessonPath, "slideFile"]);
@@ -121,17 +148,9 @@ export const useCourseForm = () => {
                 ];
                 paths.push([...quizPath, "title"]);
 
-                if (quiz.questions) {
-                  quiz.questions.forEach((q: any, questionIdx: number) => {
-                    const qPath = [...quizPath, "questions", questionIdx];
-                    paths.push([...qPath, "title"]);
-                    paths.push([...qPath, "score"]);
-
-                    if (q.type === "choice" && q.options) {
-                      q.options.forEach((oIdx: number) => {
-                        paths.push([...qPath, "options", oIdx, "content"]);
-                      });
-                    }
+                if (quiz.options) {
+                  quiz.options.forEach((oIdx: number) => {
+                    paths.push([...quizPath, "options", oIdx, "content"]);
                   });
                 }
               });
@@ -148,27 +167,33 @@ export const useCourseForm = () => {
     try {
       const fields = getFieldsToValidate();
 
-      if (fields.length > 0) {
-        await form.validateFields(fields);
-      }
-
       if (currentStep === 1) {
         const chapters = form.getFieldValue("chapters");
         if (!chapters || chapters.length === 0) {
-          message.error("Vui lòng tạo ít nhất 1 chương nội dung!");
+          message.error("Vui lòng tạo ít nhất 1 Chương nội dung!");
+          return false;
+        }
+        const hasLesson = chapters.some(
+          (ch: any) => ch.lessons && ch.lessons.length > 0
+        );
+        if (!hasLesson) {
+          message.error("Vui lòng tạo ít nhất 1 Bài học!");
           return false;
         }
       }
 
+      if (fields.length > 0) {
+        await form.validateFields(fields);
+      }
+
       return true;
     } catch (error: any) {
-      console.error("Validation Failed:", error);
       if (error.errorFields?.length > 0) {
         form.scrollToField(error.errorFields[0].name, {
           behavior: "smooth",
           block: "center",
         });
-        message.error("Vui lòng điền đầy đủ thông tin còn thiếu (được tô đỏ)!");
+        message.error("Vui lòng điền đầy đủ thông tin còn thiếu!");
       }
       return false;
     }
@@ -179,7 +204,6 @@ export const useCourseForm = () => {
       const isValid = await validateCurrentStep();
       if (!isValid) return;
     }
-
     saveSnapshot(targetStep);
     setCurrentStep(targetStep);
   };
@@ -189,7 +213,7 @@ export const useCourseForm = () => {
   const goTo = (targetStep: number) => handleStepChange(targetStep);
 
   const mutation = useMutation({
-    mutationFn: (values: ICreateCourseForm) => {
+    mutationFn: (values: any) => {
       if (isEditMode && courseId)
         return updateCourseAPI({ ...values, id: courseId });
       return createCourseAPI(values);
@@ -213,13 +237,14 @@ export const useCourseForm = () => {
   const onSubmit = async () => {
     try {
       await form.validateFields();
-      const values = form.getFieldsValue(true);
-      mutation.mutate({ ...values, status: values.status ?? 0 });
+      const rawValues = form.getFieldsValue(true);
+      const apiPayload = mapUiToApiPayload(rawValues);
+
+      mutation.mutate(apiPayload);
     } catch (e: any) {
       message.error("Vui lòng kiểm tra lại form");
       if (e.errorFields?.length > 0) {
-        const firstErrorPath = e.errorFields[0].name;
-        form.scrollToField(firstErrorPath, {
+        form.scrollToField(e.errorFields[0].name, {
           behavior: "smooth",
           block: "center",
         });

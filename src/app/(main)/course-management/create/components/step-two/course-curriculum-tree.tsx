@@ -6,7 +6,7 @@ import type {
   ICreateCourseForm,
   IChapter,
   ILesson,
-} from "../../../common/types";
+} from "../../../common/types/types";
 import { handleDropLogic } from "../../utils/tree-utils";
 
 const treeNodeStyles = `
@@ -121,11 +121,6 @@ export const CourseCurriculumTree = () => {
     const element = document.getElementById(`anchor-${key}`);
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
-      element.classList.add("ring-2", "ring-blue-400");
-      setTimeout(
-        () => element.classList.remove("ring-2", "ring-blue-400"),
-        1500
-      );
     }
   };
 

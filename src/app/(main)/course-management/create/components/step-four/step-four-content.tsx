@@ -14,11 +14,14 @@ import {
   CaretRightOutlined,
 } from "@ant-design/icons";
 
-import { getLessonIcon, getLessonTypeTag } from "../../../common/ui-utils";
+import {
+  getLessonIcon,
+  getLessonTypeTag,
+} from "../../../common/utils/ui-utils";
 
 import { CourseInfoSection } from "../step-one/course-info-section";
-import type { IChapter, ILesson, IQuiz } from "../../../common/types";
-import { formatDuration } from "../../../common/utils";
+import type { IChapter, ILesson, IQuiz } from "../../../common/types/types";
+import { formatDuration } from "../../../common/utils/utils";
 
 const CurriculumPreview = () => {
   const form = Form.useFormInstance();

@@ -2,7 +2,7 @@ import { useMemo, useDeferredValue } from "react";
 import { Tree, Form } from "antd";
 import { DownOutlined, AuditOutlined } from "@ant-design/icons";
 import type { TreeProps } from "antd/es/tree";
-import type { IChapter } from "../../../common/types";
+import type { IChapter } from "../../../common/types/types";
 import { handleDropLogic } from "../../utils/tree-utils";
 
 interface Props {

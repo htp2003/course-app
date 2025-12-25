@@ -1,9 +1,13 @@
-import React, { type ReactNode } from "react";
+import React, { type ReactNode, useState } from "react";
 import { Upload, App, Typography } from "antd";
-import { InboxOutlined } from "@ant-design/icons";
+import { InboxOutlined, LoadingOutlined } from "@ant-design/icons";
 import type { UploadChangeParam } from "antd/es/upload";
-import type { UploadFile, UploadProps } from "antd/es/upload/interface";
-import { ASPECT_RATIO_TOLERANCE } from "../../../common/constants";
+import type { UploadFile, UploadProps, RcFile } from "antd/es/upload/interface";
+import { ASPECT_RATIO_TOLERANCE } from "../../../common/constants/constants";
+import type {
+  TUploadApiCall,
+  IUploadResponse,
+} from "../../../common/types/api-response";
 
 interface CommonFileUploadProps {
   accept?: string;
@@ -20,6 +24,13 @@ interface CommonFileUploadProps {
   value?: UploadFile[];
   aspectRatio?: number;
   checkRatio?: boolean;
+  apiCall?: TUploadApiCall;
+}
+
+interface CustomRequestOptions {
+  file: string | Blob | RcFile | File;
+  onSuccess?: (body: object, xhr?: XMLHttpRequest) => void;
+  onError?: (event: Error | object, body?: object) => void;
 }
 
 export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
@@ -37,18 +48,19 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
   multiple = false,
   aspectRatio,
   checkRatio = false,
+  apiCall,
 }) => {
   const { message } = App.useApp();
+  const [uploading, setUploading] = useState(false);
+
   const checkImageRatio = (file: File): Promise<boolean> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.src = URL.createObjectURL(file);
-
       img.onload = () => {
         const width = img.width;
         const height = img.height;
         const ratio = width / height;
-
         const isValid = aspectRatio
           ? Math.abs(ratio - aspectRatio) < ASPECT_RATIO_TOLERANCE
           : true;
@@ -56,97 +68,116 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
         if (!isValid && aspectRatio) {
           const targetRatioText =
             aspectRatio === 1
-              ? "1:1 (Vuông)"
+              ? "1:1"
               : aspectRatio === 16 / 9
               ? "16:9"
               : aspectRatio.toFixed(2);
-          message.error(
-            `Ảnh sai tỉ lệ! Yêu cầu: ${targetRatioText}. Ảnh của bạn: ${ratio.toFixed(
-              2
-            )}`
-          );
+          message.error(`Ảnh sai tỉ lệ! Yêu cầu: ${targetRatioText}.`);
           reject(Upload.LIST_IGNORE);
         } else {
           resolve(true);
         }
         URL.revokeObjectURL(img.src);
       };
-
       img.onerror = () => {
-        message.error("File ảnh bị lỗi hoặc không đọc được!");
+        message.error("Lỗi đọc file ảnh!");
         reject(Upload.LIST_IGNORE);
       };
     });
   };
 
   const internalFileList = value || fileList || [];
-  const beforeUpload = async (file: UploadFile) => {
+
+  const beforeUpload = async (file: RcFile) => {
     if (accept) {
       const allowedTypes = accept.split(",").map((t) => t.trim().toLowerCase());
       const fileType = (file.type || "").toLowerCase();
       const fileName = (file.name || "").toLowerCase();
-
       const isValidType = allowedTypes.some((type) => {
-        if (type.includes("/")) {
-          if (type.endsWith("/*")) {
-            const category = type.split("/")[0];
-            return fileType.startsWith(category);
-          }
-          return fileType === type;
-        }
-        if (type.startsWith(".")) {
-          return fileName.endsWith(type);
-        }
-        return false;
+        if (type.includes("/"))
+          return type.endsWith("/*")
+            ? fileType.startsWith(type.split("/")[0])
+            : fileType === type;
+        return type.startsWith(".") ? fileName.endsWith(type) : false;
       });
-
       if (!isValidType) {
-        message.error(
-          `Định dạng file không hợp lệ! Vui lòng chỉ tải lên: ${accept}`
-        );
+        message.error(`Định dạng không hợp lệ! Chỉ nhận: ${accept}`);
         return Upload.LIST_IGNORE;
       }
     }
 
     const isLtSize = (file.size || 0) / 1024 / 1024 < maxSizeMB;
     if (!isLtSize) {
-      message.error(`File quá lớn! Dung lượng tối đa là ${maxSizeMB}MB.`);
+      message.error(`File quá lớn! Tối đa ${maxSizeMB}MB.`);
       return Upload.LIST_IGNORE;
     }
 
     if (internalFileList.length >= maxCount) {
-      message.warning(`Chỉ được phép tải lên tối đa ${maxCount} file!`);
+      message.warning(`Tối đa ${maxCount} file!`);
       return Upload.LIST_IGNORE;
     }
 
     if (checkRatio && aspectRatio && file.type?.startsWith("image/")) {
       try {
-        await checkImageRatio(file as unknown as File);
+        await checkImageRatio(file);
       } catch {
         return Upload.LIST_IGNORE;
       }
     }
-
-    message.success(`${file.name} đã được thêm vào danh sách!`);
-    return false;
+    return true;
   };
+
+  const handleCustomRequest = async (options: CustomRequestOptions) => {
+    const { file, onSuccess, onError } = options;
+    if (!(file instanceof File)) return;
+
+    if (!apiCall) {
+      onSuccess?.({});
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const res = await apiCall(file);
+
+      let serverData: IUploadResponse;
+      if (
+        "data" in res &&
+        typeof res.data === "object" &&
+        res.data !== null &&
+        "id" in res.data
+      ) {
+        serverData = res.data as IUploadResponse;
+      } else {
+        serverData = res as IUploadResponse;
+      }
+
+      onSuccess?.(serverData);
+      message.success("Upload thành công!");
+    } catch (err) {
+      onError?.(err instanceof Error ? err : new Error("Upload error"));
+      message.error("Upload thất bại, vui lòng thử lại.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleChange: UploadProps["onChange"] = (info: UploadChangeParam) => {
     let newFileList = [...info.fileList];
-    if (maxCount === 1) {
-      newFileList = newFileList.slice(-1);
-    } else {
-      newFileList = newFileList.slice(0, maxCount);
-    }
+    if (maxCount === 1) newFileList = newFileList.slice(-1);
+    else newFileList = newFileList.slice(0, maxCount);
+
     newFileList = newFileList.map((file) => {
       if (file.response) {
-        file.url = file.response.url;
+        const resp = file.response as IUploadResponse;
+        file.url = resp.uri || resp.url || file.url;
       }
       return file;
     });
-    if (onChange) {
-      onChange(newFileList);
-    }
+
+    onChange?.(newFileList);
   };
+
   return (
     <Upload.Dragger
       name="file"
@@ -157,19 +188,24 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
       fileList={internalFileList}
       beforeUpload={beforeUpload}
       onChange={handleChange}
-      showUploadList={{ showPreviewIcon: true, showRemoveIcon: true }}
+      customRequest={handleCustomRequest as UploadProps["customRequest"]}
       className="bg-gray-50/50 hover:bg-gray-100 transition-colors border-gray-300 [&_.ant-upload-list-item-container]:w-full"
       height={height}
       style={{ padding: 10 }}
+      disabled={uploading}
     >
       {internalFileList.length >= maxCount &&
       listType === "picture-card" ? null : (
         <div className="py-2 px-2">
           <p className="ant-upload-drag-icon mb-2">
-            {icon || <InboxOutlined className="text-gray-400 text-3xl" />}
+            {uploading ? (
+              <LoadingOutlined className="text-blue-500 text-3xl" />
+            ) : (
+              icon || <InboxOutlined className="text-gray-400 text-3xl" />
+            )}
           </p>
           <p className="ant-upload-text font-medium text-gray-600 text-sm">
-            {label}
+            {uploading ? "Đang xử lý..." : label}
           </p>
           {helperText && (
             <Typography.Text type="secondary" className="text-xs mt-1 block">

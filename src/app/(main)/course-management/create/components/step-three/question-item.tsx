@@ -12,12 +12,15 @@ import {
 } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import type { NamePath } from "antd/es/form/interface";
-import { QUESTION_TYPES, QUESTION_TYPE_MAP } from "../../../common/constants";
+import {
+  QUESTION_TYPES,
+  QUESTION_TYPE_MAP,
+} from "../../../common/constants/constants";
 import type {
   IAnswerOption,
   ICreateCourseForm,
   QuestionType,
-} from "../../../common/types";
+} from "../../../common/types/types";
 interface Props {
   fieldKey: number;
   qIndex: number;

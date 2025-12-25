@@ -1,4 +1,9 @@
-import type { IChapter, ILesson, IQuiz, IQuestion } from "../../common/types";
+import type {
+  IChapter,
+  ILesson,
+  IQuiz,
+  IQuestion,
+} from "../../common/types/types";
 
 type TreeItem = IChapter | ILesson | IQuiz | IQuestion;
 type TreeList = IChapter[] | ILesson[] | IQuiz[] | IQuestion[];

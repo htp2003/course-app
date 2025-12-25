@@ -9,22 +9,29 @@ import {
   Card,
   Button,
   Tooltip,
+  Typography,
 } from "antd";
 import {
   DeleteOutlined,
   FileTextOutlined,
   VideoCameraOutlined,
   DesktopOutlined,
+  PaperClipOutlined,
 } from "@ant-design/icons";
 import {
   LESSON_TYPES,
   UPLOAD_CONFIG,
   ASPECT_RATIOS,
-} from "../../../common/constants";
-import { normFile } from "../../../common/utils";
+} from "../../../common/constants/constants";
+import { normFile } from "../../../common/utils/utils";
 import { CommonFileUpload } from "../common/common-file-upload";
-import type { ICreateCourseForm, LessonTypeType } from "../../../common/types";
+import type {
+  ICreateCourseForm,
+  LessonTypeType,
+} from "../../../common/types/types";
 import type { ReactNode } from "react";
+
+import { uploadDocumentAPI } from "../../services/api";
 
 interface ILessonUploadConfig {
   field: string;
@@ -36,6 +43,7 @@ interface ILessonUploadConfig {
   icon: ReactNode;
   checkRatio?: boolean;
   aspectRatio?: number;
+  apiCall?: (file: File) => Promise<any>;
 }
 
 const getUploadConfig = (type: LessonTypeType): ILessonUploadConfig | null => {
@@ -46,14 +54,16 @@ const getUploadConfig = (type: LessonTypeType): ILessonUploadConfig | null => {
       label: "Slide bài giảng",
       maxCount: 1,
       icon: <DesktopOutlined className="text-3xl text-gray-400 mb-2" />,
+      apiCall: uploadDocumentAPI,
     };
   if (type === "document")
     return {
       ...UPLOAD_CONFIG.DOCUMENT,
       field: "docFile",
       label: "Tài liệu đính kèm",
-      maxCount: 5,
+      maxCount: 1,
       icon: <FileTextOutlined className="text-3xl text-gray-400 mb-2" />,
+      apiCall: uploadDocumentAPI,
     };
   if (type === "video")
     return {
@@ -64,6 +74,7 @@ const getUploadConfig = (type: LessonTypeType): ILessonUploadConfig | null => {
       icon: <VideoCameraOutlined className="text-3xl text-gray-400 mb-2" />,
       checkRatio: true,
       aspectRatio: ASPECT_RATIOS.VIDEO,
+      apiCall: undefined,
     };
   return null;
 };
@@ -157,7 +168,7 @@ export const LessonItem = memo(
                       className="mb-0 animate-fade-in"
                       rules={[
                         {
-                          required: true,
+                          required: type !== "video",
                           message: "Vui lòng tải nội dung lên!",
                         },
                       ]}
@@ -166,7 +177,6 @@ export const LessonItem = memo(
                         accept={config.ACCEPT}
                         maxSizeMB={config.MAX_SIZE_MB}
                         helperText={`${config.HELPER_TEXT}`}
-                        value={[]}
                         listType="picture"
                         height={160}
                         maxCount={config.maxCount}
@@ -175,6 +185,7 @@ export const LessonItem = memo(
                         label={`Click tải lên ${config.label}`}
                         checkRatio={config.checkRatio}
                         aspectRatio={config.aspectRatio}
+                        apiCall={config.apiCall}
                       />
                     </Form.Item>
                   );
@@ -184,7 +195,30 @@ export const LessonItem = memo(
               }}
             </Form.Item>
           </div>
-
+          <div className="mt-3 pt-3 border-t border-dashed border-gray-300">
+            <Typography.Text className="text-xs text-gray-500 font-semibold mb-2 block">
+              TÀI LIỆU THAM KHẢO (TÙY CHỌN)
+            </Typography.Text>
+            <Form.Item
+              name={[lessonIndex, "refDocFile"]}
+              getValueFromEvent={normFile}
+              className="mb-0"
+            >
+              <CommonFileUpload
+                accept={UPLOAD_CONFIG.DOCUMENT.ACCEPT}
+                maxSizeMB={UPLOAD_CONFIG.DOCUMENT.MAX_SIZE_MB}
+                helperText="PDF, DOC, DOCX (Tài liệu bổ trợ)"
+                listType="picture"
+                height={80}
+                maxCount={1}
+                icon={
+                  <PaperClipOutlined className="text-2xl text-gray-400 mb-1" />
+                }
+                label="Đính kèm tài liệu tham khảo"
+                apiCall={uploadDocumentAPI}
+              />
+            </Form.Item>
+          </div>
           <Tooltip title="Xóa bài học này">
             <Button
               type="text"

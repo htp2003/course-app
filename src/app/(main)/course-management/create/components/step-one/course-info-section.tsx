@@ -136,7 +136,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
         <Col xs={24} lg={8}>
           <Form.Item
             label="Hình ảnh cho khoá học"
-            tooltip="Kích thước khuyến nghị: 16:9"
+            tooltip="Hỗ trợ cắt ảnh theo tỉ lệ 16:9 tự động"
           >
             <Form.Item
               name="thumbnail"
@@ -151,7 +151,8 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
                 listType="picture"
                 maxCount={1}
                 height={250}
-                checkRatio={true}
+                enableCrop={true}
+                checkRatio={false}
                 aspectRatio={ASPECT_RATIOS.VIDEO}
                 icon={<FileImageOutlined className="text-gray-400 text-5xl" />}
                 label="Tải ảnh bìa"

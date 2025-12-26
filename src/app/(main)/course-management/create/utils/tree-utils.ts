@@ -28,7 +28,7 @@ const getListAtLevel = (
   targetLevel: number
 ): TreeList | null => {
   if (targetLevel === 0) return root;
-  let currentList: any[] = root;
+  let currentList: TreeList = root;
   for (let i = 0; i < targetLevel; i++) {
     const nodeIndex = path[i];
     const currentNode = currentList[nodeIndex] as ITraversableNode;
@@ -36,9 +36,9 @@ const getListAtLevel = (
     const childKey = LEVEL_KEYS[i];
     if (i < targetLevel) {
       if (!currentNode[childKey]) {
-        (currentNode as any)[childKey] = [];
+        (currentNode as IChapter | ILesson | IQuiz)[childKey] = [] as TreeList;
       }
-      currentList = currentNode[childKey] as any[];
+      currentList = currentNode[childKey] as TreeList;
     }
   }
   return currentList;

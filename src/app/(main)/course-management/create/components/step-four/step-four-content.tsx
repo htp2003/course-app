@@ -1,125 +1,160 @@
-import {
-  Form,
-  Typography,
-  Divider,
-  Collapse,
-  Tag,
-  Empty,
-  List,
-  Space,
-} from "antd";
-import {
-  ClockCircleOutlined,
-  CheckSquareOutlined,
-  CaretRightOutlined,
-} from "@ant-design/icons";
+import { useMemo } from "react";
+import { Form, Typography, Empty, Button } from "antd";
+import { CourseContentPreview } from "../../../components/course-content-preview";
+import type { UploadFile } from "antd/es/upload/interface";
+import type {
+  ICreateCourseForm,
+  IChapter,
+  ILesson,
+  IDocument,
+  IQuiz,
+  IQuestion,
+  IExam,
+} from "../../../common/types/types";
 
-import {
-  getLessonIcon,
-  getLessonTypeTag,
-} from "../../../common/utils/ui-utils";
+interface IUploadResponse {
+  result?: {
+    rawUrl?: string;
+    url?: string;
+    uri?: string;
+  };
+  data?: {
+    rawUrl?: string;
+    url?: string;
+    uri?: string;
+  };
+  uri?: string;
+  url?: string;
+}
 
-import { CourseInfoSection } from "../step-one/course-info-section";
-import type { IChapter, ILesson, IQuiz } from "../../../common/types/types";
-import { formatDuration } from "../../../common/utils/utils";
+const getPreviewUrl = (fileList: UploadFile[] | undefined): string => {
+  if (!fileList || !Array.isArray(fileList) || fileList.length === 0) return "";
+  const file = fileList[0];
+  if (!file) return "";
 
-const CurriculumPreview = () => {
-  const form = Form.useFormInstance();
-  const chapters: IChapter[] = Form.useWatch("chapters", form) || [];
-  if (chapters.length === 0) {
-    return <Empty description="Chưa có nội dung nào được biên soạn" />;
+  if (
+    file.originFileObj &&
+    (file.originFileObj instanceof Blob || file.originFileObj instanceof File)
+  ) {
+    return URL.createObjectURL(file.originFileObj);
   }
 
-  const items = chapters.map((chapter, index) => ({
-    key: index,
-    label: (
-      <div className="flex justify-between items-center font-semibold text-base py-1">
-        <span>{chapter.title || `Chương ${index + 1} (Chưa đặt tên)`}</span>
-        <span className="text-gray-400 text-sm font-normal">
-          {chapter.lessons?.length || 0} bài học
-        </span>
-      </div>
-    ),
-    children: (
-      <List
-        itemLayout="vertical"
-        dataSource={chapter.lessons || []}
-        renderItem={(lesson: ILesson, lIdx) => (
-          <List.Item className=" !py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors rounded-lg px-2">
-            <div className="flex items-start gap-3 px-2">
-              {}
-              <div className="mt-1 text-lg">{getLessonIcon(lesson.type)}</div>
-              <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <h4 className="font-medium text-gray-800 m-0">
-                    {lesson.title || `Bài học ${lIdx + 1}`}
-                  </h4>
-                  <Space size={4}>
-                    {getLessonTypeTag(lesson.type)}
-                    <Tag icon={<ClockCircleOutlined />} className="mr-0">
-                      {formatDuration(lesson.duration)}
-                    </Tag>
-                  </Space>
-                </div>
-                {}
-                <div className="text-xs text-gray-400 mt-1">
-                  {lesson.type === "video" &&
-                    (lesson.videoUrl
-                      ? `Link: ${lesson.videoUrl}`
-                      : "Chưa nhập link video")}
-                  {(lesson.type === "document" || lesson.type === "slide") &&
-                    "Đã đính kèm file tài liệu"}
-                </div>
-                {}
-                {lesson.quizzes && lesson.quizzes.length > 0 && (
-                  <div className="mt-3 bg-indigo-50 rounded-md p-2">
-                    <div className="text-xs font-bold text-indigo-600 mb-2 uppercase flex items-center gap-1">
-                      <CheckSquareOutlined /> Bài kiểm tra (
-                      {lesson.quizzes.length})
-                    </div>
-                    <ul className="list-disc list-inside text-sm text-gray-600 pl-1 space-y-1">
-                      {lesson.quizzes.map((quiz: IQuiz, qIdx) => (
-                        <li key={qIdx}>
-                          {quiz.title}{" "}
-                          <span className="text-gray-400 text-xs">
-                            ({quiz.questions?.length || 0} câu hỏi)
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
-          </List.Item>
-        )}
-      />
-    ),
-  }));
+  if (file.url) return file.url;
+  if (file.preview) return file.preview;
 
-  return (
-    <Collapse
-      defaultActiveKey={[0]}
-      ghost
-      items={items}
-      expandIcon={({ isActive }) => (
-        <CaretRightOutlined rotate={isActive ? 90 : 0} />
-      )}
-      className="bg-white border border-gray-200 rounded-lg shadow-sm"
-    />
-  );
+  const response = file.response as IUploadResponse | undefined;
+  if (response) {
+    if (response.data?.rawUrl) return response.data.rawUrl;
+    if (response.result?.rawUrl) return response.result.rawUrl;
+    if (response.result?.url) return response.result.url;
+    if (response.result?.uri) return response.result.uri;
+    if (response.data?.url) return response.data.url;
+    if (response.data?.uri) return response.data.uri;
+    if (response.uri) return response.uri;
+    if (response.url) return response.url;
+  }
+
+  return "";
+};
+
+const flattenQuizzesToQuestions = (quizzes: IQuiz[] | undefined): any[] => {
+  if (!quizzes || quizzes.length === 0) return [];
+
+  return quizzes.flatMap((quizGroup) => {
+    if (quizGroup.questions && quizGroup.questions.length > 0) {
+      return quizGroup.questions.map((q) => ({
+        ...q,
+        title: q.title || "Câu hỏi chưa đặt tên",
+        options: q.options,
+        explanation: q.explanation,
+      }));
+    }
+    return [quizGroup];
+  });
 };
 
 export const StepFourContent = () => {
+  const form = Form.useFormInstance();
+  const rawData = Form.useWatch([], form) as ICreateCourseForm;
+
+  const previewData = useMemo(() => {
+    if (!rawData) return null;
+
+    const transformed: ICreateCourseForm = {
+      ...rawData,
+      thumbnail: rawData.thumbnail,
+
+      chapters: (rawData.chapters || []).map((chapter: IChapter) => ({
+        ...chapter,
+        lessons: (chapter.lessons || []).map((lesson: ILesson) => {
+          const videoUrl = getPreviewUrl(lesson.videoFile);
+
+          const previewDocs: IDocument[] = [];
+          const addDoc = (files: UploadFile[] | undefined, type: string) => {
+            if (files && Array.isArray(files) && files.length > 0) {
+              files.forEach((f) => {
+                const url = getPreviewUrl([f]);
+                if (f) {
+                  previewDocs.push({
+                    id: f.uid,
+                    name: f.name || "Tài liệu",
+                    url: url,
+                    type,
+                  });
+                }
+              });
+            }
+          };
+          addDoc(lesson.docFile, "document");
+          addDoc(lesson.slideFile, "slide");
+          addDoc(lesson.refDocFile, "reference");
+
+          const flatQuizzes = flattenQuizzesToQuestions(lesson.quizzes);
+
+          return {
+            ...lesson,
+            videoUrl: videoUrl,
+            documents: previewDocs,
+            quizzes: flatQuizzes,
+            exams: lesson.exams || [],
+          };
+        }),
+      })),
+
+      exams: (rawData.exams || []).map((exam: IExam) => ({
+        ...exam,
+        quizzes: flattenQuizzesToQuestions(exam.quizzes),
+      })),
+    };
+
+    return transformed;
+  }, [rawData]);
+
+  if (!previewData) {
+    return <Empty description="Chưa có dữ liệu" />;
+  }
+
   return (
     <div className="animate-fade-in pb-10">
-      <CourseInfoSection readOnly={true} />
-      <Divider className="my-8" />
-      <div className="max-w-4xl mx-auto">
-        <Typography.Title level={3} className="text-center mb-6 text-gray-700">
-          Đề cương khóa học
-        </Typography.Title>
-        <CurriculumPreview />
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-8">
+          <Typography.Title level={3} className="text-gray-700 m-0">
+            Xem trước nội dung khóa học
+          </Typography.Title>
+          <Typography.Text type="secondary">
+            Kiểm tra kỹ nội dung, video, tài liệu và câu hỏi trước khi Xuất bản
+          </Typography.Text>
+        </div>
+
+        <div className="bg-gray-50 p-4 md:p-6 rounded-2xl border border-dashed border-gray-300 relative">
+          <div className="absolute top-4 right-4 z-10">
+            <Button size="small" type="dashed">
+              Chế độ xem trước
+            </Button>
+          </div>
+
+          <CourseContentPreview data={previewData} />
+        </div>
       </div>
     </div>
   );

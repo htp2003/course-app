@@ -45,7 +45,7 @@ export const getErrorMessage = (err: unknown): string => {
   }
 };
 
-export function debounce<F extends (...args: any[]) => unknown>(
+export function debounce<F extends (...args: never[]) => unknown>(
   func: F,
   wait: number
 ) {
@@ -53,7 +53,7 @@ export function debounce<F extends (...args: any[]) => unknown>(
 
   return function (this: ThisParameterType<F>, ...args: Parameters<F>) {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args as any), wait);
+    timeout = setTimeout(() => func.apply(this, args), wait);
   } as (...args: Parameters<F>) => void;
 }
 

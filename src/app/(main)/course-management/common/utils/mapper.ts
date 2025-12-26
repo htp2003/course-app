@@ -6,115 +6,103 @@ import type {
   IQuiz,
   LessonTypeType,
   QuestionType,
-  IQuestion,
 } from "../types/types";
+import type { TCourseDetailResponse } from "../types/api-response";
 
+type TApiDetailData = TCourseDetailResponse["data"];
+
+/**
+ * Helper: Tạo object UploadFile giả
+ */
 const createMockFile = (
-  url?: string,
-  id?: number,
+  url: string,
+  id: number,
   name: string = "file"
-): UploadFile[] => {
-  if (!url) return [];
-  return [
-    {
-      uid: `-${id || Date.now()}`,
-      name: name,
-      status: "done",
-      url: url,
-      response: { result: { id: id, mediaFileId: id, rawUrl: url, url: url } },
-    },
-  ];
-};
+): UploadFile => ({
+  uid: `-${id}`,
+  name: name,
+  status: "done",
+  url: url,
+  response: { id: id, uri: url },
+});
 
-export const mapApiToUiForm = (apiData: any): ICreateCourseForm => {
+export const mapApiToUiForm = (apiData: TApiDetailData): ICreateCourseForm => {
   if (!apiData) return {} as ICreateCourseForm;
 
-  let timeRange: [dayjs.Dayjs, dayjs.Dayjs] | undefined = undefined;
-  if (apiData.timeStateType === 1 && apiData.startTime && apiData.endTime) {
-    timeRange = [dayjs(apiData.startTime), dayjs(apiData.endTime)];
+  let thumbnail: UploadFile[] = [];
+  if (apiData.bannerUri) {
+    thumbnail = [
+      createMockFile(
+        apiData.bannerUri,
+        apiData.mediaFileId || 0,
+        "thumbnail.png"
+      ),
+    ];
   }
 
-  const publishAt = apiData.publishAt ? dayjs(apiData.publishAt) : dayjs();
+  const timeRange: [dayjs.Dayjs, dayjs.Dayjs] = [
+    apiData.startTime ? dayjs(apiData.startTime) : dayjs(),
+    apiData.endTime ? dayjs(apiData.endTime) : dayjs().add(1, "month"),
+  ];
 
-  const thumbnail = createMockFile(
-    apiData.bannerUri,
-    apiData.mediaFileId || 0,
-    "thumbnail.png"
-  );
-
-  const courseBadgeFile = createMockFile(
-    apiData.courseBadgeUri || apiData.badgeUri,
-    apiData.courseBadgeFileId || 0,
-    "badge.png"
-  );
-
-  const chapters: IChapter[] = (apiData.chapters || []).map((chap: any) => ({
+  const chapters: IChapter[] = (apiData.chapters || []).map((chap) => ({
     id: chap.id,
     title: chap.title,
-    lessons: (chap.lessons || []).map((less: any) => {
-      let uiType: LessonTypeType = "video";
-      if (less.type === 2) uiType = "video";
-      else if (less.type === 3) uiType = "document";
+    lessons: (chap.lessons || []).map((less) => {
+      const docFiles: UploadFile[] = [];
+      const slideFiles: UploadFile[] = [];
+      const videoFiles: UploadFile[] = [];
 
-      const mainFileUrl =
-        less.mediaFile?.rawUrl || less.rawUrl || less.mediaFile?.uri;
-      const mainFileId = less.mediaFile?.id || less.mediaFileId;
-      const mainFileName = less.mediaFile?.fileName || "main-content";
-
-      const mainFileObj = createMockFile(mainFileUrl, mainFileId, mainFileName);
-
-      let videoFile: UploadFile[] = [];
-      let docFile: UploadFile[] = [];
-      let slideFile: UploadFile[] = [];
-
-      if (less.type === 1) videoFile = mainFileObj;
-      else if (less.type === 3) docFile = mainFileObj;
-
-      const refFileUrl =
-        less.documentMediaFile?.rawUrl ||
-        less.docRawUrl ||
-        less.documentMediaFile?.uri;
-      const refFileId = less.documentMediaFile?.id || less.documentMediaFileId;
-      const refFileName = less.documentMediaFile?.fileName || "reference-doc";
-
-      const refDocFile = createMockFile(refFileUrl, refFileId, refFileName);
+      if (less.lessonFiles) {
+        less.lessonFiles.forEach((f) => {
+          const fileObj = createMockFile(
+            f.mediaFile?.uri,
+            f.mediaFile?.id,
+            f.mediaFile?.fileName
+          );
+          if (f.type === 2) docFiles.push(fileObj);
+          else if (f.type === 3) slideFiles.push(fileObj);
+        });
+      }
 
       const uiQuizzes: IQuiz[] = [];
+
       if (less.exams) {
-        less.exams.forEach((exam: any) => {
+        less.exams.forEach((exam) => {
           uiQuizzes.push({
             id: exam.id,
             title: exam.title,
-            questions: (exam.quizzes || []).map((q: any) => {
+            questions: (exam.quizzes || []).map((q) => {
               const qType: QuestionType = q.type === 2 ? "essay" : "choice";
+
               return {
                 id: q.id,
                 title: q.content,
                 type: qType,
                 score: 1,
                 explanation: q.explanation || "",
-                options: (q.quizAns || []).map((ans: any) => ({
-                  id: ans.id,
+                options: (q.quizAns || []).map((ans) => ({
                   content: ans.content,
                   isCorrect: ans.isTrue,
                 })),
-              } as IQuestion;
+              };
             }),
           });
         });
       }
 
+      let uiType: LessonTypeType = "video";
+      if (less.type === 2) uiType = "document";
+      if (less.type === 3) uiType = "slide";
+
       return {
         id: less.id,
         title: less.title,
-        duration: less.duration || 0,
-        type: less.type === 1 ? "video" : "document",
-
-        videoFile: videoFile,
-        docFile: docFile,
-        slideFile: slideFile,
-        refDocFile: refDocFile,
-
+        duration: 0,
+        type: uiType,
+        docFile: docFiles,
+        slideFile: slideFiles,
+        videoFile: videoFiles,
         quizzes: uiQuizzes,
       };
     }),
@@ -127,22 +115,13 @@ export const mapApiToUiForm = (apiData: any): ICreateCourseForm => {
 
   return {
     title: apiData.title,
-    description: apiData.description,
-
-    type: apiData.type,
-    timeStateType: apiData.timeStateType,
-    isHasBadge: apiData.isHasBadge,
-    isLearnInOrder: apiData.isLearnInOrder,
-
-    publishAt: publishAt,
-    timeRange: timeRange,
-
-    thumbnail: thumbnail,
-    courseBadgeFile: courseBadgeFile,
 
     category: categoryId || undefined,
-    status: apiData.status,
 
+    description: apiData.description,
+    thumbnail: thumbnail,
+    timeRange: timeRange,
     chapters: chapters,
+    status: apiData.timeStateType,
   };
 };

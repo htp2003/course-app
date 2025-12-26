@@ -3,16 +3,27 @@ export type TLoginRequest = {
   password: string;
 };
 
+export type TDepartment = {
+  id: number;
+  name: string;
+};
+
+export type TPermission = {
+  id: number;
+  name: string;
+  code: string;
+};
+
 export type TLoginResult = {
   accessToken: string;
-  department: any;
+  department: TDepartment | null;
   expiresIn: number;
   fullName: string;
   id: number;
   role: string;
   roleId: number;
   userGroupId: number;
-  permissions: any[];
+  permissions: TPermission[];
 };
 
 export type TLoginResponse = {

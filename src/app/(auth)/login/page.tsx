@@ -35,9 +35,14 @@ export const LoginPage = () => {
 
       navigate("/course-management/list");
     },
-    onError: (error: any) => {
-    
-      message.error(typeof error === "string" ? error : "Đăng nhập thất bại");
+    onError: (error: unknown) => {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : typeof error === "string"
+          ? error
+          : "Đăng nhập thất bại";
+      message.error(errorMessage);
     },
   });
 

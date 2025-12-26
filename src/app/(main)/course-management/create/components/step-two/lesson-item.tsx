@@ -1,16 +1,5 @@
 import { memo, useCallback } from "react";
-import {
-  Form,
-  Input,
-  Select,
-  InputNumber,
-  Row,
-  Col,
-  Card,
-  Button,
-  Tooltip,
-  Typography,
-} from "antd";
+import { Form, Input, Select, Row, Col, Button, Tooltip, Tag } from "antd";
 import {
   DeleteOutlined,
   FileTextOutlined,
@@ -31,7 +20,7 @@ import type {
 } from "../../../common/types/types";
 import type { ReactNode } from "react";
 
-import { uploadDocumentAPI } from "../../services/api";
+import { uploadDocumentAPI, uploadVideoChunkAPI } from "../../services/api";
 
 interface ILessonUploadConfig {
   field: string;
@@ -43,7 +32,7 @@ interface ILessonUploadConfig {
   icon: ReactNode;
   checkRatio?: boolean;
   aspectRatio?: number;
-  apiCall?: (file: File) => Promise<any>;
+  apiCall?: (file: File) => Promise<{ data: { id: number; uri: string } }>;
 }
 
 const getUploadConfig = (type: LessonTypeType): ILessonUploadConfig | null => {
@@ -53,16 +42,16 @@ const getUploadConfig = (type: LessonTypeType): ILessonUploadConfig | null => {
       field: "slideFile",
       label: "Slide bài giảng",
       maxCount: 1,
-      icon: <DesktopOutlined className="text-3xl text-gray-400 mb-2" />,
+      icon: <DesktopOutlined className="text-2xl text-blue-500" />,
       apiCall: uploadDocumentAPI,
     };
   if (type === "document")
     return {
       ...UPLOAD_CONFIG.DOCUMENT,
       field: "docFile",
-      label: "Tài liệu đính kèm",
+      label: "Tài liệu chính",
       maxCount: 1,
-      icon: <FileTextOutlined className="text-3xl text-gray-400 mb-2" />,
+      icon: <FileTextOutlined className="text-2xl text-green-500" />,
       apiCall: uploadDocumentAPI,
     };
   if (type === "video")
@@ -71,10 +60,10 @@ const getUploadConfig = (type: LessonTypeType): ILessonUploadConfig | null => {
       field: "videoFile",
       label: "Video bài giảng",
       maxCount: 1,
-      icon: <VideoCameraOutlined className="text-3xl text-gray-400 mb-2" />,
+      icon: <VideoCameraOutlined className="text-2xl text-red-500" />,
       checkRatio: true,
       aspectRatio: ASPECT_RATIOS.VIDEO,
-      apiCall: undefined,
+      apiCall: uploadVideoChunkAPI,
     };
   return null;
 };
@@ -93,143 +82,170 @@ export const LessonItem = memo(
     }, [remove, lessonIndex]);
 
     return (
-      <Card
-        size="small"
-        className="bg-gray-50 border-gray-200 hover:border-blue-300 transition-colors group"
-        styles={{ body: { padding: "12px" } }}
-      >
-        <div className="flex gap-3 items-start">
-          <div className="pt-2 font-mono text-xs text-gray-400 font-bold min-w-[20px]">
-            {lessonIndex + 1}.
-          </div>
-          <div className="flex-1">
-            <Row gutter={8}>
-              <Col xs={24} md={12}>
-                <Form.Item
-                  name={[lessonIndex, "title"]}
-                  rules={[{ required: true, message: "Nhập tên bài" }]}
-                  className="mb-2"
-                >
-                  <Input
-                    placeholder="Tên bài học"
-                    prefix={<FileTextOutlined className="text-gray-400" />}
-                  />
-                </Form.Item>
-              </Col>
-              <Col xs={12} md={8}>
-                <Form.Item
-                  name={[lessonIndex, "type"]}
-                  initialValue="video"
-                  className="mb-2"
-                >
-                  <Select options={LESSON_TYPES} />
-                </Form.Item>
-              </Col>
-              <Col xs={12} md={4}>
-                <Form.Item
-                  name={[lessonIndex, "duration"]}
-                  initialValue={0}
-                  className="mb-2"
-                >
-                  <InputNumber min={0} placeholder="Phút" className="w-full" />
-                </Form.Item>
-              </Col>
-            </Row>
+      <div className="group relative bg-slate-50 rounded-xl border border-slate-200 p-4 mb-4 hover:border-blue-300 hover:shadow-md transition-all duration-300">
+        <div className="absolute -left-3 -top-3 w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center font-bold text-slate-600 z-10">
+          {lessonIndex + 1}
+        </div>
 
-            <Form.Item
-              noStyle
-              shouldUpdate={(
-                prev: ICreateCourseForm,
-                curr: ICreateCourseForm
-              ) => {
-                const prevType =
-                  prev.chapters?.[chapterIndex]?.lessons?.[lessonIndex]?.type;
-                const currType =
-                  curr.chapters?.[chapterIndex]?.lessons?.[lessonIndex]?.type;
-                return prevType !== currType;
-              }}
-            >
-              {({ getFieldValue }) => {
-                const type = getFieldValue([
-                  "chapters",
-                  chapterIndex,
-                  "lessons",
-                  lessonIndex,
-                  "type",
-                ]) as LessonTypeType;
-
-                const config = getUploadConfig(type);
-
-                if (config) {
-                  return (
-                    <Form.Item
-                      name={[lessonIndex, config.field]}
-                      getValueFromEvent={normFile}
-                      className="mb-0 animate-fade-in"
-                      rules={[
-                        {
-                          required: type !== "video",
-                          message: "Vui lòng tải nội dung lên!",
-                        },
-                      ]}
-                    >
-                      <CommonFileUpload
-                        accept={config.ACCEPT}
-                        maxSizeMB={config.MAX_SIZE_MB}
-                        helperText={`${config.HELPER_TEXT}`}
-                        listType="picture"
-                        height={160}
-                        maxCount={config.maxCount}
-                        multiple={config.maxCount > 1}
-                        icon={config.icon}
-                        label={`Click tải lên ${config.label}`}
-                        checkRatio={config.checkRatio}
-                        aspectRatio={config.aspectRatio}
-                        apiCall={config.apiCall}
-                      />
-                    </Form.Item>
-                  );
-                }
-
-                return null;
-              }}
-            </Form.Item>
-          </div>
-          <div className="mt-3 pt-3 border-t border-dashed border-gray-300">
-            <Typography.Text className="text-xs text-gray-500 font-semibold mb-2 block">
-              TÀI LIỆU THAM KHẢO (TÙY CHỌN)
-            </Typography.Text>
-            <Form.Item
-              name={[lessonIndex, "refDocFile"]}
-              getValueFromEvent={normFile}
-              className="mb-0"
-            >
-              <CommonFileUpload
-                accept={UPLOAD_CONFIG.DOCUMENT.ACCEPT}
-                maxSizeMB={UPLOAD_CONFIG.DOCUMENT.MAX_SIZE_MB}
-                helperText="PDF, DOC, DOCX (Tài liệu bổ trợ)"
-                listType="picture"
-                height={80}
-                maxCount={1}
-                icon={
-                  <PaperClipOutlined className="text-2xl text-gray-400 mb-1" />
-                }
-                label="Đính kèm tài liệu tham khảo"
-                apiCall={uploadDocumentAPI}
-              />
-            </Form.Item>
-          </div>
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <Tooltip title="Xóa bài học này">
             <Button
-              type="text"
               danger
+              type="text"
               icon={<DeleteOutlined />}
               onClick={onRemoveLesson}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              className="bg-white/80 backdrop-blur-sm border border-red-100 shadow-sm"
             />
           </Tooltip>
         </div>
-      </Card>
+
+        <div className="mb-4 pl-2">
+          <Row gutter={[16, 16]} align="middle">
+            <Col xs={24} md={14}>
+              <div className="text-xs text-slate-400 font-semibold mb-1 uppercase tracking-wider ">
+                Tên bài học
+              </div>
+              <Form.Item
+                name={[lessonIndex, "title"]}
+                rules={[{ required: true, message: "Nhập tên" }]}
+                className="mb-0"
+              >
+                <Input
+                  placeholder="Nhập tên bài học..."
+                  className="font-medium text-slate-700 hover:bg-white focus:bg-white bg-transparent border-t-0 border-x-0 border-b border-slate-300 rounded-none px-0 shadow-none focus:shadow-none focus:border-blue-500"
+                />
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} md={10}>
+              <div className="text-xs text-slate-400 font-semibold mb-1 uppercase tracking-wider">
+                Loại nội dung
+              </div>
+              <Form.Item
+                name={[lessonIndex, "type"]}
+                initialValue="video"
+                className="mb-0"
+              >
+                <Select
+                  options={LESSON_TYPES}
+                  variant="borderless"
+                  className="border-b border-slate-300 w-full"
+                  popupMatchSelectWidth={false}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </div>
+
+        <div className="bg-white rounded-lg border border-slate-100 p-3 shadow-sm">
+          <Row gutter={24}>
+            <Col xs={24} md={14} className="border-r border-slate-100">
+              <Form.Item
+                noStyle
+                shouldUpdate={(
+                  prev: ICreateCourseForm,
+                  curr: ICreateCourseForm
+                ) => {
+                  return (
+                    prev.chapters?.[chapterIndex]?.lessons?.[lessonIndex]
+                      ?.type !==
+                    curr.chapters?.[chapterIndex]?.lessons?.[lessonIndex]?.type
+                  );
+                }}
+              >
+                {({ getFieldValue }) => {
+                  const type = getFieldValue([
+                    "chapters",
+                    chapterIndex,
+                    "lessons",
+                    lessonIndex,
+                    "type",
+                  ]) as LessonTypeType;
+
+                  const config = getUploadConfig(type);
+                  if (!config) return null;
+
+                  return (
+                    <div className="h-full flex flex-col">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Tag
+                          color="blue"
+                          className="m-0 border-0 bg-blue-50 text-blue-600 font-bold"
+                        >
+                          CHÍNH
+                        </Tag>
+                        <span className="text-xs text-slate-500">
+                          Nội dung bài học
+                        </span>
+                      </div>
+
+                      <div className="flex-1">
+                        <Form.Item
+                          name={[lessonIndex, config.field]}
+                          getValueFromEvent={normFile}
+                          className="mb-0 h-full"
+                          rules={[
+                            { required: type !== "video", message: "Bắt buộc" },
+                          ]}
+                        >
+                          <CommonFileUpload
+                            accept={config.ACCEPT}
+                            maxSizeMB={config.MAX_SIZE_MB}
+                            helperText={config.HELPER_TEXT}
+                            listType="picture"
+                            height={140}
+                            maxCount={config.maxCount}
+                            multiple={config.maxCount > 1}
+                            icon={config.icon}
+                            label={`Tải lên ${config.label}`}
+                            checkRatio={config.checkRatio}
+                            aspectRatio={config.aspectRatio}
+                            apiCall={config.apiCall}
+                          />
+                        </Form.Item>
+                      </div>
+                    </div>
+                  );
+                }}
+              </Form.Item>
+            </Col>
+
+            <Col xs={24} md={10}>
+              <div className="h-full flex flex-col pl-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Tag className="m-0 border-0 bg-slate-100 text-slate-500 font-bold">
+                    PHỤ
+                  </Tag>
+                  <span className="text-xs text-slate-400">
+                    Tài liệu đính kèm
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <Form.Item
+                    name={[lessonIndex, "refDocFile"]}
+                    getValueFromEvent={normFile}
+                    className="mb-0 h-full"
+                  >
+                    <CommonFileUpload
+                      accept={UPLOAD_CONFIG.DOCUMENT.ACCEPT}
+                      maxSizeMB={UPLOAD_CONFIG.DOCUMENT.MAX_SIZE_MB}
+                      helperText="Tài liệu bổ trợ (PDF, DOC)"
+                      listType="picture"
+                      height={140}
+                      maxCount={1}
+                      icon={
+                        <PaperClipOutlined className="text-2xl text-slate-400" />
+                      }
+                      label="Chọn file"
+                      apiCall={uploadDocumentAPI}
+                    />
+                  </Form.Item>
+                </div>
+              </div>
+            </Col>
+          </Row>
+        </div>
+      </div>
     );
   }
 );

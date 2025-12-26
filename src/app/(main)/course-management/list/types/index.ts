@@ -1,6 +1,12 @@
 export type TGetCoursesParams = {
   Page: number;
   PageSize: number;
+  Title?: string;
+  Type?: number;
+  Status?: number;
+  Topics?: number[];
+  StartTime?: string;
+  EndTime?: string;
 };
 
 export type TCourseRecord = {

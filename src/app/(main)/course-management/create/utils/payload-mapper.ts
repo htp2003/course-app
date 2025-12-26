@@ -1,16 +1,34 @@
 import dayjs from "dayjs";
 import type { UploadFile } from "antd/es/upload/interface";
-import type { ICreateCourseForm } from "../../common/types/types";
+import type {
+  ICreateCourseForm,
+  IQuestion,
+  IAnswerOption,
+} from "../../common/types/types";
 import {
   COURSE_TIME_STATE_TYPE,
   COURSE_END_PRIZE,
 } from "../../common/constants/constants";
 
+interface IUploadResponse {
+  result?: {
+    mediaFileId?: number;
+    id?: number;
+    rawUrl?: string;
+    url?: string;
+    uri?: string;
+  };
+  data?: {
+    id?: number;
+    url?: string;
+  };
+  id?: number;
+}
 
 const getFileId = (fileList?: UploadFile[]): number => {
   if (!fileList || fileList.length === 0) return 0;
   const file = fileList[0];
-  const response = file.response as any;
+  const response = file.response as IUploadResponse | undefined;
   if (!response) return 0;
 
   if (response.result?.mediaFileId) return response.result.mediaFileId;
@@ -23,7 +41,7 @@ const getFileId = (fileList?: UploadFile[]): number => {
 const getOriginalUrl = (fileList?: UploadFile[]): string => {
   if (!fileList || fileList.length === 0) return "";
   const file = fileList[0];
-  const response = file.response as any;
+  const response = file.response as IUploadResponse | undefined;
   if (!response) return "";
 
   if (response.result?.rawUrl) return response.result.rawUrl;
@@ -62,8 +80,29 @@ const getLessonTypeId = (type: string): number => {
   }
 };
 
+interface IExtractedExam {
+  title: string;
+  description?: string;
+  mediaFileId?: number;
+  lessonNo: number;
+  chapterNo: number;
+  type: number;
+  examPassRate?: number;
+  quizzes: Array<{
+    content: string;
+    type: number;
+    mediaFileId?: number;
+    explanation?: string;
+    quizAns: Array<{
+      content: string;
+      isTrue: boolean;
+    }>;
+  }>;
+  quizIds?: number[];
+}
+
 export const mapUiToApiPayload = (values: ICreateCourseForm) => {
-  const extractedExams: any[] = [];
+  const extractedExams: IExtractedExam[] = [];
   const DATE_FORMAT = "YYYY-MM-DDTHH:mm:ss";
 
   const chaptersPayload = values.chapters.map((chap, cIdx) => {
@@ -95,12 +134,12 @@ export const mapUiToApiPayload = (values: ICreateCourseForm) => {
             chapterNo: chapterNo,
             type: 1,
             examPassRate: 100,
-            quizzes: (uiQuiz.questions || []).map((q) => ({
+            quizzes: (uiQuiz.questions || []).map((q: IQuestion) => ({
               content: q.title,
               type: 1,
               mediaFileId: 0,
               explanation: q.explanation ?? "",
-              quizAns: (q.options || []).map((opt) => ({
+              quizAns: (q.options || []).map((opt: IAnswerOption) => ({
                 content: opt.content,
                 isTrue: opt.isCorrect,
               })),
@@ -176,8 +215,6 @@ export const mapUiToApiPayload = (values: ICreateCourseForm) => {
     courseTopics: values.category ? [Number(values.category)] : [],
     isLearnInOrder: values.isLearnInOrder ?? true,
   };
-
-
 
   return finalPayload;
 };

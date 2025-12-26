@@ -6,12 +6,69 @@ import dayjs from "dayjs";
 
 import { createCourseAPI, updateCourseAPI } from "../services/api";
 import { getErrorMessage } from "../../common/utils/utils";
-import type { ICreateCourseForm, ILesson } from "../../common/types/types";
+import type {
+  ICreateCourseForm,
+  ILesson,
+  IChapter,
+  IQuiz,
+} from "../../common/types/types";
 import type { TCourseDetailResponse } from "../../common/types/api-response";
 
 import { mapUiToApiPayload } from "../utils/payload-mapper";
 import { mapApiToUiForm } from "../../common/utils/mapper";
 import { useGetEditData } from "./use-get-edit-data";
+
+interface ICourseApiPayload {
+  id?: string;
+  title: string;
+  description: string;
+  mediaFileId: number;
+  bannerUri: string;
+  type: number;
+  timeStateType: number;
+  isHasBadge: number;
+  courseBadgeFileId: number;
+  publishAt: string;
+  startTime: string | null;
+  endTime: string | null;
+  chapters: Array<{
+    title: string;
+    no: number;
+    lessons: Array<{
+      title: string;
+      no: number;
+      type: number;
+      description: string;
+      mediaFileId: number;
+      rawUrl: string;
+      documentMediaFileId: number;
+      docRawUrl: string;
+      thumbnailUri: string;
+    }>;
+  }>;
+  exams: Array<{
+    title: string;
+    description?: string;
+    mediaFileId?: number;
+    lessonNo: number;
+    chapterNo: number;
+    type: number;
+    examPassRate?: number;
+    quizzes: Array<{
+      content: string;
+      type: number;
+      mediaFileId?: number;
+      explanation?: string;
+      quizAns: Array<{
+        content: string;
+        isTrue: boolean;
+      }>;
+    }>;
+    quizIds?: number[];
+  }>;
+  courseTopics: number[];
+  isLearnInOrder: boolean;
+}
 
 const DRAFT_KEY = "course_create_draft_v1";
 
@@ -80,7 +137,7 @@ export const useCourseForm = () => {
     );
   };
 
-  const getFieldsToValidate = (): any[] => {
+  const getFieldsToValidate = (): (string | (string | number)[])[] => {
     if (currentStep === 0) {
       const timeStateType = form.getFieldValue("timeStateType");
       const isHasBadge = form.getFieldValue("isHasBadge");
@@ -108,11 +165,11 @@ export const useCourseForm = () => {
     }
 
     const chapters = form.getFieldValue("chapters") || [];
-    const paths: any[] = [];
+    const paths: (string | (string | number)[])[] = [];
 
     if (currentStep === 1) {
       paths.push("chapters");
-      chapters.forEach((chap: any, cIdx: number) => {
+      chapters.forEach((chap: IChapter, cIdx: number) => {
         paths.push(["chapters", cIdx, "title"]);
         if (chap.lessons) {
           chap.lessons.forEach((less: ILesson, lIdx: number) => {
@@ -133,11 +190,11 @@ export const useCourseForm = () => {
     }
 
     if (currentStep === 2) {
-      chapters.forEach((chap: any, cIdx: number) => {
+      chapters.forEach((chap: IChapter, cIdx: number) => {
         if (chap.lessons) {
-          chap.lessons.forEach((less: any, lIdx: number) => {
+          chap.lessons.forEach((less: ILesson, lIdx: number) => {
             if (less.quizzes) {
-              less.quizzes.forEach((quiz: any, qIdx: number) => {
+              less.quizzes.forEach((quiz: IQuiz, qIdx: number) => {
                 const quizPath = [
                   "chapters",
                   cIdx,
@@ -148,9 +205,15 @@ export const useCourseForm = () => {
                 ];
                 paths.push([...quizPath, "title"]);
 
-                if (quiz.options) {
-                  quiz.options.forEach((oIdx: number) => {
-                    paths.push([...quizPath, "options", oIdx, "content"]);
+                if (quiz.questions) {
+                  quiz.questions.forEach((_question, questionIdx: number) => {
+                    const questionPath = [
+                      ...quizPath,
+                      "questions",
+                      questionIdx,
+                    ];
+                    paths.push([...questionPath, "title"]);
+                    paths.push([...questionPath, "score"]);
                   });
                 }
               });
@@ -174,7 +237,7 @@ export const useCourseForm = () => {
           return false;
         }
         const hasLesson = chapters.some(
-          (ch: any) => ch.lessons && ch.lessons.length > 0
+          (ch: IChapter) => ch.lessons && ch.lessons.length > 0
         );
         if (!hasLesson) {
           message.error("Vui lòng tạo ít nhất 1 Bài học!");
@@ -187,13 +250,18 @@ export const useCourseForm = () => {
       }
 
       return true;
-    } catch (error: any) {
-      if (error.errorFields?.length > 0) {
-        form.scrollToField(error.errorFields[0].name, {
-          behavior: "smooth",
-          block: "center",
-        });
-        message.error("Vui lòng điền đầy đủ thông tin còn thiếu!");
+    } catch (error: unknown) {
+      if (error && typeof error === "object" && "errorFields" in error) {
+        const validationError = error as {
+          errorFields?: Array<{ name: string[] }>;
+        };
+        if (validationError.errorFields?.length) {
+          form.scrollToField(validationError.errorFields[0].name, {
+            behavior: "smooth",
+            block: "center",
+          });
+          message.error("Vui lòng điền đầy đủ thông tin còn thiếu!");
+        }
       }
       return false;
     }
@@ -213,7 +281,7 @@ export const useCourseForm = () => {
   const goTo = (targetStep: number) => handleStepChange(targetStep);
 
   const mutation = useMutation({
-    mutationFn: (values: any) => {
+    mutationFn: (values: ICourseApiPayload) => {
       if (isEditMode && courseId)
         return updateCourseAPI({ ...values, id: courseId });
       return createCourseAPI(values);
@@ -241,13 +309,18 @@ export const useCourseForm = () => {
       const apiPayload = mapUiToApiPayload(rawValues);
 
       mutation.mutate(apiPayload);
-    } catch (e: any) {
+    } catch (e: unknown) {
       message.error("Vui lòng kiểm tra lại form");
-      if (e.errorFields?.length > 0) {
-        form.scrollToField(e.errorFields[0].name, {
-          behavior: "smooth",
-          block: "center",
-        });
+      if (e && typeof e === "object" && "errorFields" in e) {
+        const validationError = e as {
+          errorFields?: Array<{ name: string[] }>;
+        };
+        if (validationError.errorFields?.length) {
+          form.scrollToField(validationError.errorFields[0].name, {
+            behavior: "smooth",
+            block: "center",
+          });
+        }
       }
     }
   };

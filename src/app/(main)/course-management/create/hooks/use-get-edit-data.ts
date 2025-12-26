@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import type { UploadFile } from "antd/es/upload/interface";
 import { getCourseDetailRealAPI } from "../../detail/services/api";
 import { mapApiToUiForm } from "../../common/utils/mapper";
 
@@ -11,7 +12,7 @@ export const useGetEditData = (courseId: string | null) => {
     enabled: isEditMode,
     refetchOnWindowFocus: false,
     select: (response) => {
-      const uiData = mapApiToUiForm(response);
+      const uiData = mapApiToUiForm(response.data);
 
       if (
         response.data.bannerUri &&
@@ -24,7 +25,7 @@ export const useGetEditData = (courseId: string | null) => {
             status: "done",
             url: response.data.bannerUri,
           },
-        ] as any;
+        ] as UploadFile[];
       }
       return uiData;
     },

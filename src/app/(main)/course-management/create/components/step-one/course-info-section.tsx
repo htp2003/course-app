@@ -17,7 +17,6 @@ import {
   TrophyOutlined,
 } from "@ant-design/icons";
 import type { UploadFile } from "antd/es/upload/interface";
-import type { UploadChangeParam } from "antd/es/upload";
 import dayjs from "dayjs";
 
 import { TiptapEditor } from "../common/tiptap-editor";
@@ -31,7 +30,7 @@ import {
   LEARN_ORDER,
   COURSE_TYPE,
 } from "../../../common/constants/constants";
-import { getLabelFromValue, disablePastDates } from "../../../common/utils/utils";
+import { getLabelFromValue, disablePastDates, normFile } from "../../../common/utils/utils";
 
 import { uploadImageAPI } from "../../services/api";
 
@@ -52,11 +51,6 @@ const { RangePicker } = DatePicker;
 interface Props {
   readOnly?: boolean;
 }
-
-export const normFile = (e: UploadChangeParam | UploadFile[]): UploadFile[] => {
-  if (Array.isArray(e)) return e;
-  return e && e.fileList ? e.fileList : [];
-};
 
 const getThumbnailUrl = (thumbnailList: UploadFile[] | undefined): string => {
   if (!thumbnailList || thumbnailList.length === 0) {

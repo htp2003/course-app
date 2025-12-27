@@ -3,29 +3,6 @@ import type { UploadFile } from "antd/es/upload/interface";
 import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 
-export const formatCurrency = (amount: number | null | undefined): string => {
-  if (!amount || amount === 0) {
-    return "";
-  }
-
-  return new Intl.NumberFormat("vi-VN", {
-    style: "decimal",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
-
-export const formatDuration = (minutes: number): string => {
-  if (!minutes || minutes < 0) return "0p";
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return h > 0 ? `${h}h ${m}p` : `${m}p`;
-};
-
-export const generateTempId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2);
-};
-
 export const getLabelFromValue = <T = string>(
   value: T,
   options: { label: string; value: T }[],
@@ -46,18 +23,6 @@ export const getErrorMessage = (err: unknown): string => {
     return String(err);
   }
 };
-
-export function debounce<F extends (...args: never[]) => unknown>(
-  func: F,
-  wait: number
-) {
-  let timeout: ReturnType<typeof setTimeout> | undefined;
-
-  return function (this: ThisParameterType<F>, ...args: Parameters<F>) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  } as (...args: Parameters<F>) => void;
-}
 
 export const normFile = (e: UploadChangeParam | UploadFile[]) => {
   if (Array.isArray(e)) {

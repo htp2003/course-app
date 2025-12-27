@@ -72,7 +72,7 @@ const getLessonTypeId = (type: string): number => {
     case "video":
       return 1;
     case "document":
-      return 3;
+      return 2;
     case "slide":
       return 3;
     default:

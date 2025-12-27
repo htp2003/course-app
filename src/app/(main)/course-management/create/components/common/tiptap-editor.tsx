@@ -54,13 +54,37 @@ import {
   RichTextBubbleText,
   RichTextBubbleVideo,
 } from "reactjs-tiptap-editor/bubble";
+import { uploadImageAPI, uploadDocumentAPI } from "../../services/api";
 
-const mockUpload = (files: File) => {
-  return new Promise<string>((resolve) => {
-    setTimeout(() => {
-      resolve(URL.createObjectURL(files));
-    }, 500);
-  });
+const uploadToServer = async (files: File): Promise<string> => {
+  try {
+    // Determine if it's an image or document based on file type
+    const isImage = files.type.startsWith("image/");
+
+    const response = isImage
+      ? await uploadImageAPI(files)
+      : await uploadDocumentAPI(files);
+
+    const data = response.data;
+
+    // Extract URL from response - adjust based on your API response structure
+    const url =
+      (data as any)?.result?.rawUrl ||
+      (data as any)?.result?.url ||
+      (data as any)?.url ||
+      (data as any)?.uri ||
+      "";
+
+    if (!url) {
+      throw new Error("No URL in upload response");
+    }
+
+    return url;
+  } catch (error) {
+    console.error("Upload error:", error);
+    // Fallback to blob URL if upload fails
+    return URL.createObjectURL(files);
+  }
 };
 
 const baseExtensions = [
@@ -89,8 +113,8 @@ const baseExtensions = [
   OrderedList,
   Emoji,
   Link.configure({ openOnClick: false }),
-  Image.configure({ upload: mockUpload }),
-  Video.configure({ upload: mockUpload }),
+  Image.configure({ upload: uploadToServer }),
+  Video.configure({ upload: uploadToServer }),
 ];
 
 const CustomToolbar = memo(() => {

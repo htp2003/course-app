@@ -28,6 +28,13 @@ apiClient.interceptors.response.use(
     return response.data;
   },
   (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("user_info");
+
+      window.location.href = "/login";
+    }
+
     const message =
       error.response?.data?.message || error.message || "Lỗi hệ thống";
     return Promise.reject(message);

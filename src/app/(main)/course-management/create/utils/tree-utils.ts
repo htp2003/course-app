@@ -36,9 +36,19 @@ const getListAtLevel = (
     const childKey = LEVEL_KEYS[i];
     if (i < targetLevel) {
       if (!currentNode[childKey]) {
-        (currentNode as IChapter | ILesson | IQuiz)[childKey] = [] as TreeList;
+        if (childKey === "lessons") {
+          currentNode.lessons = [] as ILesson[];
+        } else if (childKey === "quizzes") {
+          currentNode.quizzes = [] as IQuiz[];
+        } else {
+          currentNode.questions = [] as IQuestion[];
+        }
       }
-      currentList = currentNode[childKey] as TreeList;
+      currentList = (childKey === "lessons"
+        ? currentNode.lessons
+        : childKey === "quizzes"
+          ? currentNode.quizzes
+          : currentNode.questions) as TreeList;
     }
   }
   return currentList;

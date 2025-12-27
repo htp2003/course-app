@@ -11,9 +11,7 @@ import type { TCourseDetailResponse } from "../types/api-response";
 
 type TApiDetailData = TCourseDetailResponse["data"];
 
-/**
- * Helper: Tạo object UploadFile giả
- */
+
 const createMockFile = (
   url: string,
   id: number,
@@ -55,13 +53,16 @@ export const mapApiToUiForm = (apiData: TApiDetailData): ICreateCourseForm => {
 
       if (less.lessonFiles) {
         less.lessonFiles.forEach((f) => {
-          const fileObj = createMockFile(
-            f.mediaFile?.uri,
-            f.mediaFile?.id,
-            f.mediaFile?.fileName
-          );
-          if (f.type === 2) docFiles.push(fileObj);
-          else if (f.type === 3) slideFiles.push(fileObj);
+          if (f.mediaFile) {
+            const fileObj = createMockFile(
+              f.mediaFile.uri,
+              f.mediaFile.id ?? f.mediaFileId,
+              f.mediaFile.fileName
+            );
+            if (f.type === 1) videoFiles.push(fileObj);
+            else if (f.type === 2) docFiles.push(fileObj);
+            else if (f.type === 3) slideFiles.push(fileObj);
+          }
         });
       }
 
@@ -115,13 +116,23 @@ export const mapApiToUiForm = (apiData: TApiDetailData): ICreateCourseForm => {
 
   return {
     title: apiData.title,
-
-    category: categoryId || undefined,
-
     description: apiData.description,
+
+    // core meta
+    type: apiData.type,
+    status: apiData.status,
+    timeStateType: apiData.timeStateType,
+    isHasBadge: 2, // default to NONE
+    isLearnInOrder: apiData.isLearnInOrder ?? true,
+
+    // dates/files/topics
+    publishAt: dayjs(apiData.publishAt),
     thumbnail: thumbnail,
     timeRange: timeRange,
+    category: categoryId || undefined,
+
+    // structure
     chapters: chapters,
-    status: apiData.timeStateType,
+    exams: [],
   };
 };

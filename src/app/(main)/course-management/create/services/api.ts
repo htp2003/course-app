@@ -4,11 +4,17 @@ import type { IUploadResponse } from "../../common/types/api-response";
 const UPLOAD_BASE_URL = import.meta.env.VITE_UPLOAD_API_URL;
 const CHUNK_SIZE = 5.5 * 1024 * 1024;
 
-const extractData = (res: any) => {
-  if (res?.uploadId) return res;
-  if (res?.data?.uploadId) return res.data;
-  if (res?.data?.data?.uploadId) return res.data.data;
-  return res?.data || res;
+type ExtractedResponse = Record<string, unknown>;
+
+const extractData = (res: unknown): ExtractedResponse => {
+  const resObj = res as Record<string, unknown>;
+  if (resObj?.uploadId) return resObj;
+  if (resObj?.data && typeof resObj.data === "object") {
+    const data = resObj.data as Record<string, unknown>;
+    if (data.uploadId) return data;
+    if (data.data) return data.data as ExtractedResponse;
+  }
+  return resObj?.data ? (resObj.data as ExtractedResponse) : resObj;
 };
 
 export const uploadImageAPI = (
@@ -74,13 +80,17 @@ export const uploadVideoChunkAPI = async (
       const responseData = extractData(res);
 
       if (responseData) {
-        if (responseData.uploadId) uploadId = responseData.uploadId;
-        if (responseData.key) key = responseData.key;
-        if (responseData.tagString !== undefined) {
+        const uploadIdVal = responseData.uploadId as string | undefined;
+        const keyVal = responseData.key as string | undefined;
+        const tagStringVal = responseData.tagString;
+
+        if (uploadIdVal) uploadId = uploadIdVal;
+        if (keyVal) key = keyVal;
+        if (tagStringVal !== undefined) {
           tagString =
-            typeof responseData.tagString === "object"
-              ? JSON.stringify(responseData.tagString)
-              : responseData.tagString;
+            typeof tagStringVal === "object"
+              ? JSON.stringify(tagStringVal)
+              : String(tagStringVal);
         }
       } else {
         if (isInit) throw new Error("Server không trả về UploadID");
@@ -92,7 +102,7 @@ export const uploadVideoChunkAPI = async (
       }
 
       if (isLasted) {
-        finalResponse = { data: responseData || res };
+        finalResponse = { data: (responseData || res) as IUploadResponse };
       }
 
       start = end;
@@ -109,9 +119,6 @@ export const uploadVideoChunkAPI = async (
 
 export const createCourseAPI = (payload: unknown) =>
   apiClient.post("/herbalife-academy/course", payload);
-
-export const updateCourseAPI = (payload: unknown) =>
-  apiClient.put("/herbalife-academy/course", payload);
 
 export const deleteCourseAPI = (id: string) =>
   apiClient.delete(`/herbalife-academy/course`, { params: { id } });

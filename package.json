@@ -22,6 +22,7 @@
     "@tiptap/react": "^3.13.0",
     "@tiptap/starter-kit": "^3.13.0",
     "antd": "^5.29.2",
+    "antd-img-crop": "^4.27.0",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
     "react": "^19.2.0",

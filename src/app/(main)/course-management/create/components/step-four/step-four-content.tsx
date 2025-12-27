@@ -8,7 +8,6 @@ import type {
   ILesson,
   IDocument,
   IQuiz,
-  IQuestion,
   IExam,
 } from "../../../common/types/types";
 
@@ -17,6 +16,7 @@ interface IUploadResponse {
     rawUrl?: string;
     url?: string;
     uri?: string;
+    compressUrl?: string;
   };
   data?: {
     rawUrl?: string;
@@ -32,41 +32,43 @@ const getPreviewUrl = (fileList: UploadFile[] | undefined): string => {
   const file = fileList[0];
   if (!file) return "";
 
-  if (
-    file.originFileObj &&
-    (file.originFileObj instanceof Blob || file.originFileObj instanceof File)
-  ) {
-    return URL.createObjectURL(file.originFileObj);
-  }
-
   if (file.url) return file.url;
   if (file.preview) return file.preview;
 
   const response = file.response as IUploadResponse | undefined;
   if (response) {
-    if (response.data?.rawUrl) return response.data.rawUrl;
     if (response.result?.rawUrl) return response.result.rawUrl;
+    if (response.result?.compressUrl) return response.result.compressUrl;
     if (response.result?.url) return response.result.url;
     if (response.result?.uri) return response.result.uri;
+    if (response.data?.rawUrl) return response.data.rawUrl;
     if (response.data?.url) return response.data.url;
     if (response.data?.uri) return response.data.uri;
     if (response.uri) return response.uri;
     if (response.url) return response.url;
   }
 
+  if (file.originFileObj) {
+    try {
+      return URL.createObjectURL(file.originFileObj as Blob);
+    } catch {
+    }
+  }
+
   return "";
 };
 
-const flattenQuizzesToQuestions = (quizzes: IQuiz[] | undefined): any[] => {
+const flattenQuizzesToQuestions = (quizzes: IQuiz[] | undefined): IQuiz[] => {
   if (!quizzes || quizzes.length === 0) return [];
 
   return quizzes.flatMap((quizGroup) => {
     if (quizGroup.questions && quizGroup.questions.length > 0) {
       return quizGroup.questions.map((q) => ({
-        ...q,
+        id: q.id,
         title: q.title || "Câu hỏi chưa đặt tên",
         options: q.options,
         explanation: q.explanation,
+        type: quizGroup.type,
       }));
     }
     return [quizGroup];

@@ -24,7 +24,6 @@ export const CourseWizard = () => {
     onSubmit,
     goTo,
     isSubmitting,
-    isEditMode,
   } = useCourseForm();
 
   const steps = [
@@ -41,9 +40,7 @@ export const CourseWizard = () => {
           current={currentStep}
           onChange={goTo}
           items={steps.map((s, index) => {
-            const isDisabled = isEditMode
-              ? false
-              : index > maxStep && index > currentStep + 1;
+            const isDisabled = index > maxStep && index > currentStep + 1;
 
             return {
               title: s.title,

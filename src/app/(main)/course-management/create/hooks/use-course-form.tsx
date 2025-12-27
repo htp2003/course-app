@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Form, App, notification } from "antd";
 import { useMutation } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
+import type { UploadFile } from "antd/es/upload/interface";
 
-import { createCourseAPI, updateCourseAPI } from "../services/api";
+import { createCourseAPI } from "../services/api";
 import { getErrorMessage } from "../../common/utils/utils";
 import type {
   ICreateCourseForm,
@@ -12,11 +13,8 @@ import type {
   IChapter,
   IQuiz,
 } from "../../common/types/types";
-import type { TCourseDetailResponse } from "../../common/types/api-response";
 
 import { mapUiToApiPayload } from "../utils/payload-mapper";
-import { mapApiToUiForm } from "../../common/utils/mapper";
-import { useGetEditData } from "./use-get-edit-data";
 
 interface ICourseApiPayload {
   id?: string;
@@ -72,7 +70,51 @@ interface ICourseApiPayload {
 
 const DRAFT_KEY = "course_create_draft_v1";
 
-type TApiDetailData = TCourseDetailResponse["data"];
+type FileWithResponse = UploadFile & {
+  response?: {
+    result?: {
+      rawUrl?: string;
+      compressUrl?: string;
+      url?: string;
+    };
+    data?: {
+      rawUrl?: string;
+      url?: string;
+    };
+  };
+};
+
+const getUrlFromFile = (file: FileWithResponse): string | undefined => {
+  if (file.url) return file.url;
+  const resp = file.response;
+  if (!resp) return undefined;
+  return (
+    resp.result?.rawUrl ||
+    resp.result?.compressUrl ||
+    resp.result?.url ||
+    resp.data?.rawUrl ||
+    resp.data?.url
+  );
+};
+
+const serializeFile = (file: UploadFile): UploadFile => {
+  const fileWithResp = file as FileWithResponse;
+  const url = getUrlFromFile(fileWithResp);
+  return {
+    uid: file.uid ?? "",
+    name: file.name ?? "",
+    status: file.status,
+    url,
+    response: fileWithResp.response,
+  } as UploadFile;
+};
+
+const deserializeFile = (file: UploadFile): UploadFile => {
+  const fileWithResp = file as FileWithResponse;
+  if (fileWithResp.url) return fileWithResp;
+  const url = getUrlFromFile(fileWithResp);
+  return url ? ({ ...fileWithResp, url } as UploadFile) : fileWithResp;
+};
 
 export const useCourseForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -80,30 +122,13 @@ export const useCourseForm = () => {
   const [form] = Form.useForm<ICreateCourseForm>();
 
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { message } = App.useApp();
-
-  const courseId = searchParams.get("id");
-  const isEditMode = !!courseId;
-
-  const { data: apiData, isFetching: isLoadingDetail } =
-    useGetEditData(courseId);
-
-  useEffect(() => {
-    if (apiData && isEditMode) {
-      const rawData = apiData as unknown as TApiDetailData;
-
-      const uiData = mapApiToUiForm(rawData);
-      form.setFieldsValue(uiData);
-    }
-  }, [apiData, isEditMode, form]);
 
   useEffect(() => {
     if (currentStep > maxStep) setMaxStep(currentStep);
   }, [currentStep, maxStep]);
 
   useEffect(() => {
-    if (isEditMode) return;
     const draft = localStorage.getItem(DRAFT_KEY);
     if (draft) {
       try {
@@ -117,7 +142,36 @@ export const useCourseForm = () => {
           data.publishAt = dayjs(data.publishAt);
         }
 
-        if (data.thumbnail) delete data.thumbnail;
+        if (data.thumbnail && Array.isArray(data.thumbnail)) {
+          data.thumbnail = data.thumbnail.map(deserializeFile);
+        }
+
+        if (data.courseBadgeFile && Array.isArray(data.courseBadgeFile)) {
+          data.courseBadgeFile = data.courseBadgeFile.map(deserializeFile);
+        }
+
+        if (data.chapters && Array.isArray(data.chapters)) {
+          data.chapters = data.chapters.map((chapter: IChapter) => {
+            if (chapter.lessons && Array.isArray(chapter.lessons)) {
+              chapter.lessons = chapter.lessons.map((lesson: ILesson) => {
+                if (lesson.docFile && Array.isArray(lesson.docFile)) {
+                  lesson.docFile = lesson.docFile.map(deserializeFile);
+                }
+                if (lesson.slideFile && Array.isArray(lesson.slideFile)) {
+                  lesson.slideFile = lesson.slideFile.map(deserializeFile);
+                }
+                if (lesson.videoFile && Array.isArray(lesson.videoFile)) {
+                  lesson.videoFile = lesson.videoFile.map(deserializeFile);
+                }
+                if (lesson.refDocFile && Array.isArray(lesson.refDocFile)) {
+                  lesson.refDocFile = lesson.refDocFile.map(deserializeFile);
+                }
+                return lesson;
+              });
+            }
+            return chapter;
+          });
+        }
 
         form.setFieldsValue(data);
         setCurrentStep(step);
@@ -125,12 +179,47 @@ export const useCourseForm = () => {
         localStorage.removeItem(DRAFT_KEY);
       }
     }
-  }, [form, isEditMode]);
+  }, [form]);
 
   const saveSnapshot = (targetStep: number) => {
-    if (isEditMode) return;
     const allData = form.getFieldsValue(true);
-    const { thumbnail, ...safeData } = allData;
+
+    const safeData: ICreateCourseForm = { ...allData } as ICreateCourseForm;
+
+    if (safeData.thumbnail && Array.isArray(safeData.thumbnail)) {
+      safeData.thumbnail = safeData.thumbnail.map(serializeFile);
+    }
+
+    if (safeData.courseBadgeFile && Array.isArray(safeData.courseBadgeFile)) {
+      safeData.courseBadgeFile = safeData.courseBadgeFile.map(serializeFile);
+    }
+
+    if (safeData.chapters && Array.isArray(safeData.chapters)) {
+      safeData.chapters = safeData.chapters.map((chapter: IChapter) => {
+        if (chapter.lessons && Array.isArray(chapter.lessons)) {
+          chapter.lessons = chapter.lessons.map((lesson: ILesson) => {
+            const serializedLesson = { ...lesson } as ILesson;
+
+            if (serializedLesson.docFile && Array.isArray(serializedLesson.docFile)) {
+              serializedLesson.docFile = serializedLesson.docFile.map(serializeFile);
+            }
+            if (serializedLesson.slideFile && Array.isArray(serializedLesson.slideFile)) {
+              serializedLesson.slideFile = serializedLesson.slideFile.map(serializeFile);
+            }
+            if (serializedLesson.videoFile && Array.isArray(serializedLesson.videoFile)) {
+              serializedLesson.videoFile = serializedLesson.videoFile.map(serializeFile);
+            }
+            if (serializedLesson.refDocFile && Array.isArray(serializedLesson.refDocFile)) {
+              serializedLesson.refDocFile = serializedLesson.refDocFile.map(serializeFile);
+            }
+
+            return serializedLesson;
+          });
+        }
+        return chapter;
+      });
+    }
+
     localStorage.setItem(
       DRAFT_KEY,
       JSON.stringify({ step: targetStep, data: safeData })
@@ -281,19 +370,13 @@ export const useCourseForm = () => {
   const goTo = (targetStep: number) => handleStepChange(targetStep);
 
   const mutation = useMutation({
-    mutationFn: (values: ICourseApiPayload) => {
-      if (isEditMode && courseId)
-        return updateCourseAPI({ ...values, id: courseId });
-      return createCourseAPI(values);
-    },
+    mutationFn: (values: ICourseApiPayload) => createCourseAPI(values),
     onSuccess: () => {
       notification.success({
         message: "Thành công",
-        description: isEditMode
-          ? "Đã cập nhật khóa học!"
-          : "Đã tạo khóa học mới!",
+        description: "Đã tạo khóa học mới!",
       });
-      if (!isEditMode) localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(DRAFT_KEY);
       form.resetFields();
       navigate("/course-management/list");
     },
@@ -333,7 +416,6 @@ export const useCourseForm = () => {
     prev,
     goTo,
     onSubmit,
-    isSubmitting: mutation.isPending || isLoadingDetail,
-    isEditMode,
+    isSubmitting: mutation.isPending,
   };
 };

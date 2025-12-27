@@ -77,7 +77,10 @@ interface CustomRequestOptions {
 }
 
 interface UploadApiFunction {
-  (file: File, onProgress?: (percent: number) => void): Promise<any>;
+  (
+    file: File,
+    onProgress?: (percent: number) => void
+  ): Promise<{ data: IUploadResponse } | IUploadResponse>;
 }
 
 export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
@@ -248,10 +251,9 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
       showUploadList={maxCount === 1 ? false : true}
       className={`
         [&_.ant-upload-list-item-container]:w-full
-        ${
-          isCoverMode
-            ? "!p-0 overflow-hidden [&_.ant-upload-btn]:!p-0 [&_.ant-upload-drag-container]:!p-0 !border-none !bg-transparent"
-            : "bg-gray-50/50 hover:bg-gray-100 transition-colors border-gray-300"
+        ${isCoverMode
+          ? "!p-0 overflow-hidden [&_.ant-upload-btn]:!p-0 [&_.ant-upload-drag-container]:!p-0 !border-none !bg-transparent"
+          : "bg-gray-50/50 hover:bg-gray-100 transition-colors border-gray-300"
         }
       `}
       height={height}

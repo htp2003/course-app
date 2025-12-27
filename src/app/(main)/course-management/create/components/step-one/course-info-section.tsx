@@ -35,6 +35,18 @@ import { getLabelFromValue } from "../../../common/utils/utils";
 
 import { uploadImageAPI } from "../../services/api";
 
+interface UploadResponse {
+  result?: {
+    rawUrl?: string;
+    compressUrl?: string;
+    url?: string;
+  };
+  data?: {
+    rawUrl?: string;
+    url?: string;
+  };
+}
+
 const { RangePicker } = DatePicker;
 
 interface Props {
@@ -51,11 +63,24 @@ const getThumbnailUrl = (thumbnailList: UploadFile[] | undefined): string => {
     return "https://placehold.co/600x400?text=No+Image";
   }
   const file = thumbnailList[0];
+
   if (file.url) return file.url;
+
+  if (file.response) {
+    const resp = file.response as UploadResponse;
+    if (resp.result?.rawUrl) return resp.result.rawUrl;
+    if (resp.result?.compressUrl) return resp.result.compressUrl;
+    if (resp.result?.url) return resp.result.url;
+    if (resp.data?.rawUrl) return resp.data.rawUrl;
+    if (resp.data?.url) return resp.data.url;
+  }
 
   const originFile = file.originFileObj;
   if (originFile) {
-    return URL.createObjectURL(originFile as Blob);
+    try {
+      return URL.createObjectURL(originFile as Blob);
+    } catch {
+    }
   }
 
   return file.thumbUrl || "https://placehold.co/600x400?text=No+Image";

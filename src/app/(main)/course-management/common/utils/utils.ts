@@ -1,5 +1,7 @@
 import type { UploadChangeParam } from "antd/es/upload";
 import type { UploadFile } from "antd/es/upload/interface";
+import dayjs from "dayjs";
+import type { Dayjs } from "dayjs";
 
 export const formatCurrency = (amount: number | null | undefined): string => {
   if (!amount || amount === 0) {
@@ -88,4 +90,12 @@ export const formatDate = (
   } catch (error) {
     return "--";
   }
+};
+
+/**
+ * Block selecting dates before today. Works with AntD DatePicker/RangePicker disabledDate prop.
+ */
+export const disablePastDates = (current: Dayjs): boolean => {
+  if (!current) return false;
+  return current.isBefore(dayjs().startOf("day"));
 };

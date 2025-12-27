@@ -31,7 +31,7 @@ import {
   LEARN_ORDER,
   COURSE_TYPE,
 } from "../../../common/constants/constants";
-import { getLabelFromValue } from "../../../common/utils/utils";
+import { getLabelFromValue, disablePastDates } from "../../../common/utils/utils";
 
 import { uploadImageAPI } from "../../services/api";
 
@@ -229,6 +229,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
               format="DD/MM/YYYY HH:mm"
               placeholder="Chọn thời gian phát hành"
               className="w-full"
+              disabledDate={disablePastDates}
             />
           </Form.Item>
 
@@ -274,6 +275,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
                         "Thời gian diễn ra đến",
                       ]}
                       className="w-full"
+                      disabledDate={disablePastDates}
                     />
                   </Form.Item>
                 ) : null;

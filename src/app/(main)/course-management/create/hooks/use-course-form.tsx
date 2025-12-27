@@ -132,7 +132,7 @@ export const useCourseForm = () => {
     const draft = localStorage.getItem(DRAFT_KEY);
     if (draft) {
       try {
-        const { step, data } = JSON.parse(draft);
+        const { step = 0, maxStep: storedMaxStep = 0, data } = JSON.parse(draft);
 
         if (data.timeRange && Array.isArray(data.timeRange)) {
           data.timeRange = [dayjs(data.timeRange[0]), dayjs(data.timeRange[1])];
@@ -175,6 +175,7 @@ export const useCourseForm = () => {
 
         form.setFieldsValue(data);
         setCurrentStep(step);
+        setMaxStep(Math.max(storedMaxStep, step));
       } catch (e) {
         localStorage.removeItem(DRAFT_KEY);
       }
@@ -220,9 +221,12 @@ export const useCourseForm = () => {
       });
     }
 
+    const nextMaxStep = Math.max(maxStep, currentStep, targetStep);
+    setMaxStep(nextMaxStep);
+
     localStorage.setItem(
       DRAFT_KEY,
-      JSON.stringify({ step: targetStep, data: safeData })
+      JSON.stringify({ step: targetStep, maxStep: nextMaxStep, data: safeData })
     );
   };
 

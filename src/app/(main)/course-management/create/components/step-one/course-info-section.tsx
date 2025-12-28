@@ -83,7 +83,7 @@ const getThumbnailUrl = (thumbnailList: UploadFile[] | undefined): string => {
 const CourseInfoPreview = () => {
   const form = Form.useFormInstance();
   const watchedValues = Form.useWatch([], form);
-  const { title, category, description, thumbnail, timeRange } =
+  const { title, categories, description, thumbnail, timeRange } =
     watchedValues || {};
   const thumbUrl = getThumbnailUrl(thumbnail);
 
@@ -109,12 +109,24 @@ const CourseInfoPreview = () => {
             </Typography.Title>
 
             <div className="flex gap-2 mt-3 flex-wrap items-center">
-              <Tag
-                color="purple"
-                className="px-3 py-1 text-sm rounded-full font-medium"
-              >
-                {getLabelFromValue(category, COURSE_CATEGORIES)}
-              </Tag>
+              {Array.isArray(categories) && categories.length > 0 ? (
+                categories.map((cat: number) => (
+                  <Tag
+                    key={cat}
+                    color="purple"
+                    className="px-3 py-1 text-sm rounded-full font-medium"
+                  >
+                    {getLabelFromValue(cat, COURSE_CATEGORIES)}
+                  </Tag>
+                ))
+              ) : (
+                <Tag
+                  color="purple"
+                  className="px-3 py-1 text-sm rounded-full font-medium"
+                >
+                  Chung
+                </Tag>
+              )}
 
               {timeRange && timeRange[0] && timeRange[1] && (
                 <Tag
@@ -206,11 +218,17 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
           </Form.Item>
 
           <Form.Item
-            name="category"
+            name="categories"
             label="Chủ đề"
-            rules={[{ required: true, message: "Chọn chủ đề" }]}
+            rules={[
+              { required: true, type: "array", min: 1, message: "Chọn ít nhất 1 chủ đề" },
+            ]}
           >
-            <Select placeholder="Chọn chủ đề..." options={COURSE_CATEGORIES} />
+            <Select
+              mode="multiple"
+              placeholder="Chọn chủ đề..."
+              options={COURSE_CATEGORIES}
+            />
           </Form.Item>
 
           <Form.Item
@@ -359,6 +377,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
                 message: "Vui lòng nhập mô tả khóa học, ít nhất 10 ký tự",
               },
             ]}
+            validateTrigger="onSubmit"
           >
             <TiptapEditor placeholder="Nhập mô tả..." />
           </Form.Item>

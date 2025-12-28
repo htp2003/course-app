@@ -237,7 +237,7 @@ export const useCourseForm = () => {
 
       const baseFields = [
         "title",
-        "category",
+        "categories",
         "description",
         "thumbnail",
         "type",
@@ -353,7 +353,7 @@ export const useCourseForm = () => {
             behavior: "smooth",
             block: "center",
           });
-          message.error("Vui lòng điền đầy đủ thông tin còn thiếu!");
+          // Do not show generic error message; field-level messages are visible.
         }
       }
       return false;

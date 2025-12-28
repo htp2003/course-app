@@ -16,6 +16,8 @@ import type {
   IQuiz,
   IDocument,
 } from "../common/types/types";
+import { COURSE_CATEGORIES } from "../common/constants/constants";
+import { getLabelFromValue } from "../common/utils/utils";
 
 interface IUploadResponse {
   result?: {
@@ -273,10 +275,16 @@ export const CourseContentPreview = ({ data }: Props) => {
           />
         </div>
         <div className="flex-1">
-          <div className="flex gap-2 mb-3">
-            <Tag color="geekblue" className="rounded-md px-2 font-medium">
-              {data.category || "Chung"}
-            </Tag>
+          <div className="flex gap-2 mb-3 flex-wrap">
+            {Array.isArray((data as any).categories) && (data as any).categories.length > 0 ? (
+              ((data as any).categories as Array<number | string>).map((cat) => (
+                <Tag key={String(cat)} color="geekblue" className="rounded-md px-2 font-medium">
+                  {getLabelFromValue(Number(cat), COURSE_CATEGORIES)}
+                </Tag>
+              ))
+            ) : (
+              <Tag color="geekblue" className="rounded-md px-2 font-medium">Chung</Tag>
+            )}
             {data.id && (
               <Tag color="cyan" className="rounded-md px-2 font-medium">
                 ID: {data.id}

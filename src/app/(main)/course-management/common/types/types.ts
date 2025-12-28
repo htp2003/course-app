@@ -84,6 +84,7 @@ export interface ICreateCourseForm {
   description: string;
   status?: number;
   category: CourseCategoryType;
+  categories?: number[];
   type: number;
   timeStateType: number;
   isHasBadge: number;

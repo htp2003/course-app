@@ -1,16 +1,12 @@
 import { memo, useCallback } from "react";
-import { Form, Input, Select, Row, Col, Button, Tooltip, Tag } from "antd";
+import { Form, Input, Row, Col, Button, Tooltip, Tag, Radio } from "antd";
 import {
   DeleteOutlined,
   FileTextOutlined,
   VideoCameraOutlined,
   DesktopOutlined,
 } from "@ant-design/icons";
-import {
-  LESSON_TYPES,
-  UPLOAD_CONFIG,
-  ASPECT_RATIOS,
-} from "../../../common/constants/constants";
+import { UPLOAD_CONFIG, ASPECT_RATIOS } from "../../../common/constants/constants";
 import { normFile } from "../../../common/utils/utils";
 import { CommonFileUpload } from "../common/common-file-upload";
 import type {
@@ -125,12 +121,11 @@ export const LessonItem = memo(
                 initialValue="video"
                 className="mb-0"
               >
-                <Select
-                  options={LESSON_TYPES}
-                  variant="borderless"
-                  className="border-b border-slate-300 w-full"
-                  popupMatchSelectWidth={false}
-                />
+                <Radio.Group className="w-full">
+                  <Radio value="video">Video bài giảng</Radio>
+                  <Radio value="document">Tài liệu đọc</Radio>
+                  <Radio value="slide">Slide thuyết trình</Radio>
+                </Radio.Group>
               </Form.Item>
             </Col>
           </Row>

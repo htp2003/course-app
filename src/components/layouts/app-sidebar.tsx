@@ -39,7 +39,6 @@ export const AppSidebar = ({ collapsed, setCollapsed }: TAppSidebarProps) => {
 
   return (
     <>
-      {/* Desktop/Large screens: keep Sider */}
       <Sider
         trigger={null}
         collapsible
@@ -67,7 +66,6 @@ export const AppSidebar = ({ collapsed, setCollapsed }: TAppSidebarProps) => {
         />
       </Sider>
 
-      {/* Tablet/Mobile: slide-in Drawer controlled by collapsed toggle */}
       {!screens.lg && (
         <Drawer
           placement="left"

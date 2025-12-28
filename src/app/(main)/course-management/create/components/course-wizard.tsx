@@ -115,7 +115,7 @@ export const CourseWizard = () => {
               iconPosition="end"
               className="rounded-xl shadow-md font-medium w-full md:w-auto px-3 md:px-6"
             >
-              <span className="hidden md:inline">Tiế tục</span>
+              <span className="hidden md:inline">Tiếp tục</span>
             </Button>
           )}
 

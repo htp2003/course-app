@@ -212,7 +212,11 @@ export const mapUiToApiPayload = (values: ICreateCourseForm) => {
     chapters: chaptersPayload,
     exams: extractedExams,
 
-    courseTopics: values.category ? [Number(values.category)] : [],
+    courseTopics: Array.isArray(values.categories)
+      ? values.categories.map((c: number | string) => Number(c))
+      : values.category
+        ? [Number(values.category)]
+        : [],
     isLearnInOrder: values.isLearnInOrder ?? true,
   };
 

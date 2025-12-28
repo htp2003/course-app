@@ -198,7 +198,7 @@ export const CourseList = () => {
     },
     {
       title: "Trạng thái",
-      dataIndex: "timeStateType",
+      dataIndex: "status",
       key: "status",
       width: 140,
       render: (statusValue: number) => {

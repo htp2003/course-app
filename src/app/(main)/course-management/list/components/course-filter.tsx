@@ -48,17 +48,23 @@ export const CourseFilter = ({ initialValues, onFilter, loading }: Props) => {
       Type: values.Type,
       Topics: values.Topics,
       StartTime: values.dateRange
-        ? values.dateRange[0].startOf("day").toISOString()
+        ? values.dateRange[0].format("YYYY-MM-DD")
         : undefined,
       EndTime: values.dateRange
-        ? values.dateRange[1].endOf("day").toISOString()
+        ? values.dateRange[1].format("YYYY-MM-DD")
         : undefined,
     };
     onFilter(apiParams);
   };
 
   const handleReset = () => {
-    form.resetFields();
+    form.setFieldsValue({
+      Title: undefined,
+      Status: undefined,
+      Type: undefined,
+      Topics: undefined,
+      dateRange: undefined,
+    });
     onFilter({
       Title: undefined,
       Status: undefined,

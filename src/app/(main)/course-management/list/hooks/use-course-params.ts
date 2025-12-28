@@ -19,10 +19,7 @@ export const useCourseParams = () => {
 
     const topicsParam = searchParams.get("Topics");
     const topics = topicsParam
-      ? topicsParam
-          .split(",")
-          .map(Number)
-          .filter((n) => !isNaN(n))
+      ? topicsParam.split(",").map(Number).filter((n) => !isNaN(n))
       : undefined;
 
     const startTime = searchParams.get("StartTime") || undefined;
@@ -47,8 +44,10 @@ export const useCourseParams = () => {
       if (value === undefined || value === null || value === "") {
         nextParams.delete(key);
       } else if (Array.isArray(value)) {
-        if (value.length > 0) nextParams.set(key, value.join(","));
-        else nextParams.delete(key);
+        nextParams.delete(key);
+        if (value.length > 0) {
+          nextParams.set(key, value.join(","));
+        }
       } else {
         nextParams.set(key, String(value));
       }

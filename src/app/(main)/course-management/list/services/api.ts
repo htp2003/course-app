@@ -12,7 +12,9 @@ export const courseListAPI = {
           const value = params[key as keyof TGetCoursesParams];
 
           if (Array.isArray(value)) {
-            value.forEach((item) => searchParams.append(key, String(item)));
+            if (value.length > 0) {
+              searchParams.append(key, value.join(","));
+            }
           } else if (value !== undefined && value !== null && value !== "") {
             searchParams.append(key, String(value));
           }

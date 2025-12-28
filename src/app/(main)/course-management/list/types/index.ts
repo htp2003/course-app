@@ -14,6 +14,7 @@ export type TCourseRecord = {
   title: string;
   bannerUri: string | null;
   type: number;
+  status: number;
   timeStateType: number;
   startTime: string | null;
   endTime: string | null;

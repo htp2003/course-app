@@ -58,7 +58,7 @@ export const QuizItem = memo(
         >
           <Input type="number" min={0} max={100} suffix="%" />
         </Form.Item>
-        
+
         <Form.List name={[quizIndex, "questions"]}>
           {(qFields, { add, remove: removeQ }) => (
             <div className="flex flex-col">

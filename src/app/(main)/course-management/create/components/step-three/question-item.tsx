@@ -156,7 +156,7 @@ export const QuestionItem = memo(
                     </Radio.Group>
                   </Form.Item>
                 </div>
-                {}
+                { }
                 <Form.List name={[qIndex, "options"]}>
                   {(optFields, { add: addOpt, remove: removeOpt }) => (
                     <div className="flex flex-col gap-2">

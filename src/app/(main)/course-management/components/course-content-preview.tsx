@@ -17,6 +17,22 @@ import type {
   IDocument,
 } from "../common/types/types";
 
+interface IUploadResponse {
+  result?: {
+    rawUrl?: string;
+    url?: string;
+    uri?: string;
+    compressUrl?: string;
+  };
+  data?: {
+    rawUrl?: string;
+    url?: string;
+    uri?: string;
+  };
+  uri?: string;
+  url?: string;
+}
+
 const { Title, Text } = Typography;
 const { Panel } = Collapse;
 
@@ -58,20 +74,18 @@ export const CourseContentPreview = ({ data }: Props) => {
                     key={opt.id || oIdx}
                     className={`
                       flex items-start gap-3 p-2 rounded border text-sm transition-colors
-                      ${
-                        isCorrect
-                          ? "bg-green-50 border-green-200"
-                          : "bg-gray-50 border-gray-100"
+                      ${isCorrect
+                        ? "bg-green-50 border-green-200"
+                        : "bg-gray-50 border-gray-100"
                       }
                     `}
                   >
                     <div
                       className={`
                         w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold shrink-0 mt-0.5
-                        ${
-                          isCorrect
-                            ? "bg-green-200 text-green-800"
-                            : "bg-gray-200 text-gray-500"
+                        ${isCorrect
+                          ? "bg-green-200 text-green-800"
+                          : "bg-gray-200 text-gray-500"
                         }
                       `}
                     >
@@ -188,7 +202,7 @@ export const CourseContentPreview = ({ data }: Props) => {
           <div className="bg-indigo-50/50 border-l-4 border-indigo-500 pl-4 py-3 rounded-r-lg">
             <div className="flex items-center gap-2 text-indigo-800 font-bold text-base">
               <CheckCircleOutlined />
-              <span>Bài tập củng cố ({lesson.quizzes.length} câu)</span>
+              <span>Bài kiểm tra ({lesson.quizzes.length} câu)</span>
             </div>
             {renderQuizList(lesson.quizzes)}
           </div>
@@ -239,8 +253,19 @@ export const CourseContentPreview = ({ data }: Props) => {
         <div className="w-full md:w-1/3">
           <Image
             src={
-              Array.isArray(data.thumbnail) && data.thumbnail.length
-                ? data.thumbnail[0].url || data.thumbnail[0].thumbUrl
+              Array.isArray(data.thumbnail) && data.thumbnail.length > 0
+                ? (() => {
+                  const thumb = data.thumbnail[0];
+                  // Try URL first
+                  if (thumb.url) return thumb.url;
+                  // Try response paths
+                  const resp = thumb.response as IUploadResponse | undefined;
+                  if (resp?.result?.rawUrl) return resp.result.rawUrl;
+                  if (resp?.result?.url) return resp.result.url;
+                  if (resp?.data?.url) return resp.data.url;
+                  // Fallback to thumbUrl
+                  return thumb.thumbUrl || "https://placehold.co/600x400?text=No+Banner";
+                })()
                 : "https://placehold.co/600x400?text=No+Banner"
             }
             className="rounded-lg object-cover w-full h-full min-h-[200px]"

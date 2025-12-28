@@ -10,7 +10,7 @@ import { UPLOAD_CONFIG, ASPECT_RATIOS } from "../../../common/constants/constant
 import { normFile } from "../../../common/utils/utils";
 import { CommonFileUpload } from "../common/common-file-upload";
 import type {
-
+  ICreateCourseForm,
   LessonTypeType,
 } from "../../../common/types/types";
 import type { ReactNode } from "react";
@@ -96,7 +96,7 @@ export const LessonItem = memo(
 
         <div className="mb-4 pl-2">
           <Row gutter={[16, 16]} align="middle">
-            <Col xs={24} md={14}>
+            <Col span={24}>
               <div className="text-xs text-slate-400 font-semibold mb-1 uppercase tracking-wider ">
                 Tên bài học
               </div>
@@ -112,7 +112,7 @@ export const LessonItem = memo(
               </Form.Item>
             </Col>
 
-            <Col xs={24} md={10}>
+            <Col span={24}>
               <div className="text-xs text-slate-400 font-semibold mb-1 uppercase tracking-wider">
                 Loại nội dung
               </div>
@@ -132,35 +132,59 @@ export const LessonItem = memo(
         </div>
 
         <div className="bg-white rounded-lg border border-slate-100 p-3 shadow-sm">
-          <Row gutter={[16, 16]}>
-            <Col span={24} className="border-b border-slate-100 pb-4">
+          <Row gutter={[0, 24]}> {/* Tăng khoảng cách hàng để thoáng hơn khi xếp dọc */}
+            {/* PHẦN NỘI DUNG CHÍNH */}
+            <Col span={24} className="border-b border-slate-100 pb-6">
               <Form.Item
                 noStyle
-                shouldUpdate={(prev, curr) =>
-                  prev.chapters?.[chapterIndex]?.lessons?.[lessonIndex]?.type !==
-                  curr.chapters?.[chapterIndex]?.lessons?.[lessonIndex]?.type
-                }
+                shouldUpdate={(prev: ICreateCourseForm, curr: ICreateCourseForm) => {
+                  return (
+                    prev.chapters?.[chapterIndex]?.lessons?.[lessonIndex]?.type !==
+                    curr.chapters?.[chapterIndex]?.lessons?.[lessonIndex]?.type
+                  );
+                }}
               >
                 {({ getFieldValue }) => {
-                  const type = getFieldValue(["chapters", chapterIndex, "lessons", lessonIndex, "type"]);
+                  const type = getFieldValue([
+                    "chapters",
+                    chapterIndex,
+                    "lessons",
+                    lessonIndex,
+                    "type",
+                  ]) as LessonTypeType;
+
                   const config = getUploadConfig(type);
                   if (!config) return null;
 
                   return (
                     <div className="h-full flex flex-col">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Tag color="blue" className="m-0 border-0 bg-blue-50 text-blue-600 font-bold">CHÍNH</Tag>
-                        <span className="text-xs text-slate-500">Nội dung bài học</span>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Tag color="blue" className="m-0 border-0 bg-blue-50 text-blue-600 font-bold">
+                          CHÍNH
+                        </Tag>
+                        <span className="text-xs text-slate-500 font-medium">Nội dung bài học chính</span>
                       </div>
+
                       <div className="flex-1">
                         <Form.Item
-                          name={[lessonIndex, config.field]}
+                          name={[lessonIndex, config.field]} // config.field sẽ là videoFile, docFile hoặc slideFile
                           getValueFromEvent={normFile}
                           className="mb-0 h-full"
-                          rules={[{ required: type !== "video", message: "Bắt buộc" }]}
+                          rules={[{ required: type !== "video", message: "Vui lòng tải lên nội dung chính" }]}
                         >
                           <CommonFileUpload
-                            height={120}
+                            accept={config.ACCEPT}
+                            maxSizeMB={config.MAX_SIZE_MB}
+                            helperText={config.HELPER_TEXT}
+                            listType="picture"
+                            height={150}
+                            maxCount={config.maxCount}
+                            multiple={config.maxCount > 1}
+                            icon={config.icon}
+                            label={`Tải lên ${config.label}`}
+                            checkRatio={config.checkRatio}
+                            aspectRatio={config.aspectRatio}
+                            apiCall={config.apiCall} // Rất quan trọng để upload hoạt động
                           />
                         </Form.Item>
                       </div>
@@ -170,11 +194,14 @@ export const LessonItem = memo(
               </Form.Item>
             </Col>
 
+            {/* PHẦN TÀI LIỆU PHỤ */}
             <Col span={24}>
               <div className="h-full flex flex-col w-full">
-                <div className="flex items-center gap-2 mb-2">
-                  <Tag className="m-0 border-0 bg-slate-100 text-slate-500 font-bold">PHỤ</Tag>
-                  <span className="text-xs text-slate-400">Tài liệu đính kèm</span>
+                <div className="flex items-center gap-2 mb-3">
+                  <Tag className="m-0 border-0 bg-slate-100 text-slate-500 font-bold">
+                    PHỤ
+                  </Tag>
+                  <span className="text-xs text-slate-400 font-medium">Tài liệu bổ trợ (không bắt buộc)</span>
                 </div>
                 <div className="flex-1 w-full">
                   <Form.Item
@@ -183,7 +210,15 @@ export const LessonItem = memo(
                     className="mb-0 h-full w-full"
                   >
                     <CommonFileUpload
-                      height={120}
+                      accept={UPLOAD_CONFIG.DOCUMENT.ACCEPT}
+                      maxSizeMB={UPLOAD_CONFIG.DOCUMENT.MAX_SIZE_MB}
+                      helperText={UPLOAD_CONFIG.DOCUMENT.HELPER_TEXT}
+                      listType="picture"
+                      height={150}
+                      maxCount={1}
+                      icon={<FileTextOutlined className="text-2xl text-green-500" />}
+                      label="Tải lên tài liệu bổ trợ"
+                      apiCall={uploadDocumentAPI} // Đảm bảo gọi đúng API upload tài liệu
                     />
                   </Form.Item>
                 </div>

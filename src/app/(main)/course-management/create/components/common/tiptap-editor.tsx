@@ -55,6 +55,21 @@ import {
   RichTextBubbleVideo,
 } from "reactjs-tiptap-editor/bubble";
 import { uploadImageAPI, uploadDocumentAPI } from "../../services/api";
+import Youtube from "@tiptap/extension-youtube";
+
+const YOUTUBE_ID_REGEX =
+  /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})(?:[&#?].*)?$/i;
+
+const extractYouTubeId = (url: string): string | null => {
+  const match = url.trim().match(YOUTUBE_ID_REGEX);
+  return match ? match[1] : null;
+};
+
+const toYouTubeEmbedUrl = (url: string, nocookie = true) => {
+  const id = extractYouTubeId(url);
+  if (!id) return null;
+  return `https://www.youtube${nocookie ? "-nocookie" : ""}.com/embed/${id}`;
+};
 
 const uploadToServer = async (files: File): Promise<string> => {
   try {
@@ -115,6 +130,7 @@ const baseExtensions = [
   Link.configure({ openOnClick: false }),
   Image.configure({ upload: uploadToServer }),
   Video.configure({ upload: uploadToServer }),
+  Youtube.configure({ nocookie: true, controls: true }),
 ];
 
 const CustomToolbar = memo(() => {
@@ -174,7 +190,14 @@ export const TiptapEditor = ({
     return [
       ...baseExtensions,
       Placeholder.configure({
-        placeholder: placeholder || "Nhập nội dung mô tả chi tiết...",
+        // Ẩn placeholder khi editor không rỗng (ví dụ đã có video)
+        placeholder: ({ editor }) =>
+          editor.isEmpty
+            ? placeholder || "Nhập nội dung mô tả chi tiết..."
+            : "",
+        includeChildren: false,
+        showOnlyCurrent: false,
+        showOnlyWhenEditable: true,
       }),
     ];
   }, [placeholder]);
@@ -224,6 +247,30 @@ export const TiptapEditor = ({
     }
   }, [readOnly, editor]);
 
+  // Auto-embed YouTube when a link is pasted
+  useEffect(() => {
+    if (!editor || readOnly) return;
+    const dom = editor.view.dom as HTMLElement;
+
+    const onPaste = (e: ClipboardEvent) => {
+      const text = e.clipboardData?.getData("text/plain");
+      if (!text) return;
+      const embed = toYouTubeEmbedUrl(text, true);
+      if (embed) {
+        e.preventDefault();
+        editor
+          .chain()
+          .focus()
+          // width/height optional; let default render
+          .setYoutubeVideo({ src: embed })
+          .run();
+      }
+    };
+
+    dom.addEventListener("paste", onPaste as unknown as EventListener);
+    return () => dom.removeEventListener("paste", onPaste as unknown as EventListener);
+  }, [editor, readOnly]);
+
   if (!editor) return null;
 
   if (readOnly) {
@@ -239,7 +286,7 @@ export const TiptapEditor = ({
   }
 
   return (
-    <div className="border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm hover:border-blue-400 transition-colors">
+    <div className="tiptap-editor border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm hover:border-blue-400 transition-colors">
       <RichTextProvider editor={editor}>
         <div className="flex flex-col w-full">
           <CustomToolbar />

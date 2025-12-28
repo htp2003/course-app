@@ -321,7 +321,8 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
                         helperText="Ảnh huy chương (PNG, JPG)"
                         listType="picture"
                         maxCount={1}
-                        height={150}
+                        height={180}
+                        width={220}
                         icon={
                           <TrophyOutlined className="text-yellow-500 text-3xl" />
                         }

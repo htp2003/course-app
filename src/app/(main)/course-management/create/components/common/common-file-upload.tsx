@@ -60,6 +60,7 @@ interface CommonFileUploadProps {
   label?: string;
   helperText?: string;
   height?: number;
+  width?: number;
   maxCount?: number;
   multiple?: boolean;
   value?: UploadFile[];
@@ -93,6 +94,7 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
   label = "Kéo thả hoặc click để tải file",
   helperText,
   height = 200,
+  width,
   maxCount = 1,
   multiple = false,
   aspectRatio,
@@ -257,7 +259,7 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
         }
       `}
       height={height}
-      style={{ padding: isCoverMode ? 0 : 10 }}
+      style={{ padding: isCoverMode ? 0 : 10, width, maxWidth: width }}
       disabled={uploading}
     >
       {isCoverMode ? (
@@ -334,7 +336,7 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
                   />
                 </Tooltip>
               </div>
-              <div className="absolute bottom-2 text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity mt-2">
                 Nhấn để thay đổi file
               </div>
             </>

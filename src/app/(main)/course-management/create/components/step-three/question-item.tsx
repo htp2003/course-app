@@ -106,15 +106,6 @@ export const QuestionItem = memo(
           <Input.TextArea placeholder="Nhập nội dung câu hỏi..." rows={2} />
         </Form.Item>
         <Form.Item
-          label="Điểm số"
-          name={[qIndex, "score"]}
-          initialValue={1}
-          className="mb-4"
-        >
-          <Input type="number" className="w-32" suffix="điểm" />
-        </Form.Item>
-        {}
-        <Form.Item
           noStyle
           shouldUpdate={(prev: ICreateCourseForm, curr: ICreateCourseForm) => {
             const prevType =

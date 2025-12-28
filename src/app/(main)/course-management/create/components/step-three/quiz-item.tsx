@@ -43,6 +43,21 @@ export const QuizItem = memo(
           </Button>
         }
       >
+        <Form.Item
+          label="Tỉ lệ đạt (%)"
+          name={[quizIndex, "examPassRate"]}
+          initialValue={70}
+          className="mb-6 w-48"
+          rules={[
+            { required: true, message: "Nhập tỉ lệ đạt" },
+            {
+              pattern: /^(100|[0-9]{1,2})$/,
+              message: "Tỉ lệ phải từ 0 đến 100",
+            },
+          ]}
+        >
+          <Input type="number" min={0} max={100} suffix="%" />
+        </Form.Item>
         
         <Form.List name={[quizIndex, "questions"]}>
           {(qFields, { add, remove: removeQ }) => (
@@ -70,7 +85,7 @@ export const QuizItem = memo(
               <Button
                 size="large"
                 onClick={() =>
-                  add({ title: "", type: "choice", options: [], score: 1 })
+                  add({ title: "", type: "choice", options: [] })
                 }
                 icon={<PlusOutlined />}
                 className="mt-2 text-blue-600 border-blue-300 hover:border-blue-500"

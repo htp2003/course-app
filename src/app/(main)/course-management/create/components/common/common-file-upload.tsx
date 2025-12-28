@@ -253,13 +253,14 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
       showUploadList={maxCount === 1 ? false : true}
       className={`
         [&_.ant-upload-list-item-container]:w-full
+        [&_.ant-upload]:w-full
+        [&_.ant-upload]:h-full
         ${isCoverMode
           ? "!p-0 overflow-hidden [&_.ant-upload-btn]:!p-0 [&_.ant-upload-drag-container]:!p-0 !border-none !bg-transparent"
-          : "bg-gray-50/50 hover:bg-gray-100 transition-colors border-gray-300"
+          : "bg-gray-50/50 hover:bg-gray-100 transition-colors border-gray-300 [&_.ant-upload-drag-container]:flex [&_.ant-upload-drag-container]:flex-col [&_.ant-upload-drag-container]:items-center [&_.ant-upload-drag-container]:justify-center [&_.ant-upload-drag-container]:text-center [&_.ant-upload-drag-container]:h-full [&_.ant-upload-drag-container]:w-full"
         }
       `}
-      height={height}
-      style={{ padding: isCoverMode ? 0 : 10, width, maxWidth: width }}
+      style={{ height, padding: isCoverMode ? 0 : 10, width: width || "100%", maxWidth: width }}
       disabled={uploading}
     >
       {isCoverMode ? (
@@ -359,7 +360,10 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
             )}
           </div>
           {helperText && !uploading && (
-            <Typography.Text type="secondary" className="text-xs mt-1 block">
+            <Typography.Text
+              type="secondary"
+              className="text-xs mt-1 block text-center w-full truncate"
+            >
               {helperText}
             </Typography.Text>
           )}

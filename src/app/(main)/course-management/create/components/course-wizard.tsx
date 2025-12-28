@@ -1,4 +1,4 @@
-import { Steps, Button, Card, Form } from "antd";
+import { Steps, Button, Card, Form, Grid } from "antd";
 import { useCourseForm } from "../hooks/use-course-form";
 import {
   InfoCircleOutlined,
@@ -14,6 +14,8 @@ import { StepTwoContent } from "./step-two/step-two-content";
 import { StepThreeContent } from "./step-three/step-three-content";
 import { StepFourContent } from "./step-four/step-four-content";
 
+const { useBreakpoint } = Grid;
+
 export const CourseWizard = () => {
   const {
     currentStep,
@@ -26,6 +28,7 @@ export const CourseWizard = () => {
     isSubmitting,
   } = useCourseForm();
 
+  const screens = useBreakpoint();
   const steps = [
     { title: "Thông tin chung", icon: <InfoCircleOutlined /> },
     { title: "Nội dung & Bài học", icon: <FileTextOutlined /> },
@@ -39,9 +42,9 @@ export const CourseWizard = () => {
         <Steps
           current={currentStep}
           onChange={goTo}
+          direction={screens.lg ? "horizontal" : "vertical"}
           items={steps.map((s, index) => {
             const isDisabled = index > maxStep && index > currentStep + 1;
-
             return {
               title: s.title,
               icon: s.icon,
@@ -89,17 +92,17 @@ export const CourseWizard = () => {
         </div>
       </Form>
 
-      <div className="fixed bottom-8 right-8 z-50 flex flex-col gap-2">
-        <div className="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100">
+      <div className="fixed bottom-4 md:bottom-8 right-4 md:right-8 z-50 flex flex-col gap-2">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2 bg-white p-2 md:p-3 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100">
           {currentStep > 0 && (
             <Button
               onClick={prev}
               size="large"
               disabled={isSubmitting}
               icon={<ArrowLeftOutlined />}
-              className="rounded-xl border-none bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium"
+              className="rounded-xl border-none bg-gray-100 hover:bg-gray-200 text-gray-600 font-medium w-full md:w-auto"
             >
-              Quay lại
+              <span className="hidden md:inline">Quay lại</span>
             </Button>
           )}
 
@@ -110,9 +113,9 @@ export const CourseWizard = () => {
               size="large"
               icon={<ArrowRightOutlined />}
               iconPosition="end"
-              className="rounded-xl shadow-md font-medium px-6"
+              className="rounded-xl shadow-md font-medium w-full md:w-auto px-3 md:px-6"
             >
-              Tiếp tục
+              <span className="hidden md:inline">Tiế tục</span>
             </Button>
           )}
 
@@ -121,11 +124,11 @@ export const CourseWizard = () => {
               type="primary"
               size="large"
               icon={<CheckOutlined />}
-              className="bg-green-600 hover:bg-green-500 border-green-600 rounded-xl shadow-green-200 shadow-lg font-bold px-6"
+              className="bg-green-600 hover:bg-green-500 border-green-600 rounded-xl shadow-green-200 shadow-lg font-bold w-full md:w-auto px-3 md:px-6"
               onClick={onSubmit}
               loading={isSubmitting}
             >
-              Hoàn tất khóa học
+              <span className="hidden md:inline">Hoàn tất khóa học</span>
             </Button>
           )}
         </div>

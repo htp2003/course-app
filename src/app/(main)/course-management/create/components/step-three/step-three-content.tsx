@@ -9,15 +9,13 @@ export const StepThreeContent = () => {
   }, []);
   return (
     <div className="step-three-wrapper">
-      <Row gutter={24}>
-        <Col span={7} className="hidden md:block">
+      <Row gutter={[16, 24]} className="w-full">
+        <Col xs={0} md={6} lg={7} className="hidden md:block">
           <Affix offsetTop={120}>
-          
             <QuizSidebarTree onSelectNode={handleSelectNode} />
           </Affix>
         </Col>
-        <Col span={17} xs={24} md={17}>
-        
+        <Col xs={24} md={18} lg={17}>
           <StepThreeRightPane selectedKey={selectedNodeKey} />
         </Col>
       </Row>

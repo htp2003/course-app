@@ -5,7 +5,6 @@ import {
   FileTextOutlined,
   VideoCameraOutlined,
   DesktopOutlined,
-  PaperClipOutlined,
 } from "@ant-design/icons";
 import {
   LESSON_TYPES,
@@ -15,7 +14,7 @@ import {
 import { normFile } from "../../../common/utils/utils";
 import { CommonFileUpload } from "../common/common-file-upload";
 import type {
-  ICreateCourseForm,
+
   LessonTypeType,
 } from "../../../common/types/types";
 import type { ReactNode } from "react";
@@ -138,69 +137,35 @@ export const LessonItem = memo(
         </div>
 
         <div className="bg-white rounded-lg border border-slate-100 p-3 shadow-sm">
-          <Row gutter={24}>
-            <Col xs={24} md={14} className="border-r border-slate-100">
+          <Row gutter={[16, 16]}>
+            <Col span={24} className="border-b border-slate-100 pb-4">
               <Form.Item
                 noStyle
-                shouldUpdate={(
-                  prev: ICreateCourseForm,
-                  curr: ICreateCourseForm
-                ) => {
-                  return (
-                    prev.chapters?.[chapterIndex]?.lessons?.[lessonIndex]
-                      ?.type !==
-                    curr.chapters?.[chapterIndex]?.lessons?.[lessonIndex]?.type
-                  );
-                }}
+                shouldUpdate={(prev, curr) =>
+                  prev.chapters?.[chapterIndex]?.lessons?.[lessonIndex]?.type !==
+                  curr.chapters?.[chapterIndex]?.lessons?.[lessonIndex]?.type
+                }
               >
                 {({ getFieldValue }) => {
-                  const type = getFieldValue([
-                    "chapters",
-                    chapterIndex,
-                    "lessons",
-                    lessonIndex,
-                    "type",
-                  ]) as LessonTypeType;
-
+                  const type = getFieldValue(["chapters", chapterIndex, "lessons", lessonIndex, "type"]);
                   const config = getUploadConfig(type);
                   if (!config) return null;
 
                   return (
                     <div className="h-full flex flex-col">
                       <div className="flex items-center gap-2 mb-2">
-                        <Tag
-                          color="blue"
-                          className="m-0 border-0 bg-blue-50 text-blue-600 font-bold"
-                        >
-                          CHÍNH
-                        </Tag>
-                        <span className="text-xs text-slate-500">
-                          Nội dung bài học
-                        </span>
+                        <Tag color="blue" className="m-0 border-0 bg-blue-50 text-blue-600 font-bold">CHÍNH</Tag>
+                        <span className="text-xs text-slate-500">Nội dung bài học</span>
                       </div>
-
                       <div className="flex-1">
                         <Form.Item
                           name={[lessonIndex, config.field]}
                           getValueFromEvent={normFile}
                           className="mb-0 h-full"
-                          rules={[
-                            { required: type !== "video", message: "Bắt buộc" },
-                          ]}
+                          rules={[{ required: type !== "video", message: "Bắt buộc" }]}
                         >
                           <CommonFileUpload
-                            accept={config.ACCEPT}
-                            maxSizeMB={config.MAX_SIZE_MB}
-                            helperText={config.HELPER_TEXT}
-                            listType="picture"
-                            height={140}
-                            maxCount={config.maxCount}
-                            multiple={config.maxCount > 1}
-                            icon={config.icon}
-                            label={`Tải lên ${config.label}`}
-                            checkRatio={config.checkRatio}
-                            aspectRatio={config.aspectRatio}
-                            apiCall={config.apiCall}
+                            height={120}
                           />
                         </Form.Item>
                       </div>
@@ -210,34 +175,20 @@ export const LessonItem = memo(
               </Form.Item>
             </Col>
 
-            <Col xs={24} md={10}>
-              <div className="h-full flex flex-col pl-2">
+            <Col span={24}>
+              <div className="h-full flex flex-col w-full">
                 <div className="flex items-center gap-2 mb-2">
-                  <Tag className="m-0 border-0 bg-slate-100 text-slate-500 font-bold">
-                    PHỤ
-                  </Tag>
-                  <span className="text-xs text-slate-400">
-                    Tài liệu đính kèm
-                  </span>
+                  <Tag className="m-0 border-0 bg-slate-100 text-slate-500 font-bold">PHỤ</Tag>
+                  <span className="text-xs text-slate-400">Tài liệu đính kèm</span>
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 w-full">
                   <Form.Item
                     name={[lessonIndex, "refDocFile"]}
                     getValueFromEvent={normFile}
-                    className="mb-0 h-full"
+                    className="mb-0 h-full w-full"
                   >
                     <CommonFileUpload
-                      accept={UPLOAD_CONFIG.DOCUMENT.ACCEPT}
-                      maxSizeMB={UPLOAD_CONFIG.DOCUMENT.MAX_SIZE_MB}
-                      helperText="Tài liệu bổ trợ (PDF, DOC)"
-                      listType="picture"
-                      height={140}
-                      maxCount={1}
-                      icon={
-                        <PaperClipOutlined className="text-2xl text-slate-400" />
-                      }
-                      label="Chọn file"
-                      apiCall={uploadDocumentAPI}
+                      height={120}
                     />
                   </Form.Item>
                 </div>

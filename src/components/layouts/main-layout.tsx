@@ -12,13 +12,13 @@ export const MainLayout = () => {
 
   return (
     <Layout className="min-h-screen">
-      <AppSidebar collapsed={collapsed} />
+      <AppSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
 
-      <Layout className="transition-all duration-200">
+      <Layout className="transition-all duration-200 w-full">
         <AppHeader collapsed={collapsed} setCollapsed={setCollapsed} />
 
-        <Content className="m-4 overflow-initial">
-          <div className="p-6 min-h-[360px] bg-white rounded-lg shadow-sm h-full">
+        <Content className="m-2 md:m-4 overflow-initial">
+          <div className="p-3 md:p-6 min-h-[360px] bg-white rounded-lg shadow-sm h-full">
             <Outlet />
           </div>
         </Content>

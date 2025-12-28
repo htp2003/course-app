@@ -40,11 +40,12 @@ const { Panel } = Collapse;
 
 interface Props {
   data: ICreateCourseForm;
+  hideHeader?: boolean;
 }
 
 const getOptionLabel = (index: number) => String.fromCharCode(65 + index);
 
-export const CourseContentPreview = ({ data }: Props) => {
+export const CourseContentPreview = ({ data, hideHeader = false }: Props) => {
   if (!data || !data.title) return <Empty description="Đang tải dữ liệu..." />;
 
   const allChapterKeys = data.chapters?.map((c, index) => c.id || index) || [];
@@ -251,67 +252,71 @@ export const CourseContentPreview = ({ data }: Props) => {
 
   return (
     <div className="animate-fade-in space-y-8 pb-20">
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row gap-6">
-        <div className="w-full md:w-1/3">
-          <Image
-            src={
-              Array.isArray(data.thumbnail) && data.thumbnail.length > 0
-                ? (() => {
-                  const thumb = data.thumbnail[0];
-                  // Try URL first
-                  if (thumb.url) return thumb.url;
-                  // Try response paths
-                  const resp = thumb.response as IUploadResponse | undefined;
-                  if (resp?.result?.rawUrl) return resp.result.rawUrl;
-                  if (resp?.result?.url) return resp.result.url;
-                  if (resp?.data?.url) return resp.data.url;
-                  // Fallback to thumbUrl
-                  return thumb.thumbUrl || "https://placehold.co/600x400?text=No+Banner";
-                })()
-                : "https://placehold.co/600x400?text=No+Banner"
-            }
-            className="rounded-lg object-cover w-full h-full min-h-[200px]"
-            fallback="https://placehold.co/600x400?text=Error"
-          />
-        </div>
-        <div className="flex-1">
-          <div className="flex gap-2 mb-3 flex-wrap">
-            {Array.isArray((data as any).categories) && (data as any).categories.length > 0 ? (
-              ((data as any).categories as Array<number | string>).map((cat) => (
-                <Tag key={String(cat)} color="geekblue" className="rounded-md px-2 font-medium">
-                  {getLabelFromValue(Number(cat), COURSE_CATEGORIES)}
+      {!hideHeader && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row gap-6">
+          <div className="w-full md:w-1/3">
+            <Image
+              src={
+                Array.isArray(data.thumbnail) && data.thumbnail.length > 0
+                  ? (() => {
+                    const thumb = data.thumbnail[0];
+                    // Try URL first
+                    if (thumb.url) return thumb.url;
+                    // Try response paths
+                    const resp = thumb.response as IUploadResponse | undefined;
+                    if (resp?.result?.rawUrl) return resp.result.rawUrl;
+                    if (resp?.result?.url) return resp.result.url;
+                    if (resp?.data?.url) return resp.data.url;
+                    // Fallback to thumbUrl
+                    return thumb.thumbUrl || "https://placehold.co/600x400?text=No+Banner";
+                  })()
+                  : "https://placehold.co/600x400?text=No+Banner"
+              }
+              className="rounded-lg object-cover w-full h-full min-h-[200px]"
+              fallback="https://placehold.co/600x400?text=Error"
+            />
+          </div>
+          <div className="flex-1">
+            <div className="flex gap-2 mb-3 flex-wrap">
+              {Array.isArray(data.categories) && data.categories.length > 0 ? (
+                (data.categories as Array<number | string>).map((cat) => (
+                  <Tag key={String(cat)} color="geekblue" className="rounded-md px-2 font-medium">
+                    {getLabelFromValue(Number(cat), COURSE_CATEGORIES)}
+                  </Tag>
+                ))
+              ) : data.category ? (
+                <Tag color="geekblue" className="rounded-md px-2 font-medium">{data.category}</Tag>
+              ) : (
+                <Tag color="geekblue" className="rounded-md px-2 font-medium">Chung</Tag>
+              )}
+              {data.id && (
+                <Tag color="cyan" className="rounded-md px-2 font-medium">
+                  ID: {data.id}
                 </Tag>
-              ))
-            ) : (
-              <Tag color="geekblue" className="rounded-md px-2 font-medium">Chung</Tag>
-            )}
-            {data.id && (
-              <Tag color="cyan" className="rounded-md px-2 font-medium">
-                ID: {data.id}
-              </Tag>
-            )}
-          </div>
-          <Title
-            level={1}
-            className="mt-0 mb-4 text-gray-900 font-extrabold text-2xl md:text-3xl"
-          >
-            {data.title}
-          </Title>
+              )}
+            </div>
+            <Title
+              level={1}
+              className="mt-0 mb-4 text-gray-900 font-extrabold text-2xl md:text-3xl"
+            >
+              {data.title}
+            </Title>
 
-          <div
-            className="text-gray-600 prose prose-sm max-w-none bg-gray-50 p-4 rounded-lg border border-gray-100"
-            dangerouslySetInnerHTML={{
-              __html: data.description || "<i>Chưa có mô tả</i>",
-            }}
-          />
+            <div
+              className="text-gray-600 prose prose-sm max-w-none bg-gray-50 p-4 rounded-lg border border-gray-100"
+              dangerouslySetInnerHTML={{
+                __html: data.description || "<i>Chưa có mô tả</i>",
+              }}
+            />
 
-          <div className="flex gap-6 mt-4 text-gray-500 font-medium border-t border-gray-100 pt-4">
-            <span className="flex items-center gap-2">
-              <ProfileOutlined /> {data.chapters?.length || 0} Chương
-            </span>
+            <div className="flex gap-6 mt-4 text-gray-500 font-medium border-t border-gray-100 pt-4">
+              <span className="flex items-center gap-2">
+                <ProfileOutlined /> {data.chapters?.length || 0} Chương
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="space-y-4">
         <Title

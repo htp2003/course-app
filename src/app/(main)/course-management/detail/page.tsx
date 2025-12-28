@@ -99,14 +99,14 @@ export const CourseDetailPage = () => {
 
       thumbnail: apiData.bannerUri
         ? [
-            {
-              uid: "-1",
-              name: "banner",
-              status: "done",
-              url: apiData.bannerUri,
-              thumbUrl: apiData.bannerUri,
-            },
-          ]
+          {
+            uid: "-1",
+            name: "banner",
+            status: "done",
+            url: apiData.bannerUri,
+            thumbUrl: apiData.bannerUri,
+          },
+        ]
         : [],
 
       chapters: apiData.chapters?.map((ch: IApiChapter) => ({
@@ -115,7 +115,7 @@ export const CourseDetailPage = () => {
         lessons: ch.lessons?.map((les: IApiLesson) => ({
           id: les.id,
           title: les.title,
-          description: les.description,documents: les.lessonFiles?.map((f) => ({
+          description: les.description, documents: les.lessonFiles?.map((f) => ({
             id: f.mediaFile?.id || f.id,
             name: f.mediaFile?.fileName || "Tài liệu không tên",
             url: f.mediaFile?.uri || "",
@@ -125,7 +125,7 @@ export const CourseDetailPage = () => {
           quizzes: mapQuizzes(les.quizzes),
 
           exams: mapExams(les.exams),
-          
+
 
           type: les.type,
         })),

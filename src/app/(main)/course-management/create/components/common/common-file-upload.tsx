@@ -68,6 +68,7 @@ interface CommonFileUploadProps {
   checkRatio?: boolean;
   enableCrop?: boolean;
   apiCall?: TUploadApiCall;
+  disabled?: boolean;
 }
 
 interface CustomRequestOptions {
@@ -101,6 +102,7 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
   checkRatio = false,
   enableCrop = false,
   apiCall,
+  disabled = false,
 }) => {
   const { message } = App.useApp();
   const [uploading, setUploading] = useState(false);
@@ -250,7 +252,7 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
       beforeUpload={beforeUpload}
       onChange={handleChange}
       customRequest={handleCustomRequest as any}
-      showUploadList={maxCount === 1 ? false : true}
+      showUploadList={maxCount === 1 ? false : { showRemoveIcon: !disabled }}
       className={`
         [&_.ant-upload-list-item-container]:w-full
         [&_.ant-upload]:w-full
@@ -261,7 +263,7 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
         }
       `}
       style={{ height, padding: isCoverMode ? 0 : 10, width: width || "100%", maxWidth: width }}
-      disabled={uploading}
+      disabled={uploading || disabled}
     >
       {isCoverMode ? (
         <div className="relative w-full h-full group flex items-center justify-center">
@@ -270,7 +272,7 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
             alt="preview"
             className="w-full h-full object-cover rounded-lg"
           />
-          {!uploading && (
+          {!uploading && !disabled && (
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-10 rounded-lg">
               <EyeOutlined
                 className="text-white text-xl cursor-pointer hover:scale-110"
@@ -329,17 +331,21 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
                   MB
                 </Typography.Text>
               </div>
-              <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Tooltip title="Xóa file">
-                  <DeleteOutlined
-                    className="text-gray-400 hover:text-red-500 text-lg cursor-pointer bg-white rounded-full p-1 shadow-sm border border-gray-200"
-                    onClick={handleRemove}
-                  />
-                </Tooltip>
-              </div>
-              <div className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity mt-2">
-                Nhấn để thay đổi file
-              </div>
+              {!disabled && (
+                <>
+                  <div className="absolute top-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Tooltip title="Xóa file">
+                      <DeleteOutlined
+                        className="text-gray-400 hover:text-red-500 text-lg cursor-pointer bg-white rounded-full p-1 shadow-sm border border-gray-200"
+                        onClick={handleRemove}
+                      />
+                    </Tooltip>
+                  </div>
+                  <div className="text-[10px] text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity mt-2">
+                    Nhấn để thay đổi file
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>

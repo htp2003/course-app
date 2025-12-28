@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Form, Typography, Empty, Button } from "antd";
 import { CourseContentPreview } from "../../../components/course-content-preview";
+import { CourseInfoSection } from "../step-one/course-info-section";
 import type { UploadFile } from "antd/es/upload/interface";
 import type {
   ICreateCourseForm,
@@ -141,11 +142,21 @@ export const StepFourContent = () => {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <Typography.Title level={3} className="text-gray-700 m-0">
-            Xem trước nội dung khóa học
+            Xem trước khóa học
           </Typography.Title>
           <Typography.Text type="secondary">
-            Kiểm tra kỹ nội dung, video, tài liệu và câu hỏi trước khi Xuất bản
+            Kiểm tra toàn bộ thông tin và nội dung khóa học trước khi xuất bản
           </Typography.Text>
+        </div>
+
+        {/* Step 1: Basic Information (Read-only) */}
+        <CourseInfoSection readOnly={true} />
+
+        {/* Course Content Preview */}
+        <div className="text-center mb-6 mt-10">
+          <Typography.Title level={4} className="text-gray-700 m-0">
+            Nội dung & Bài học
+          </Typography.Title>
         </div>
 
         <div className="bg-gray-50 p-4 md:p-6 rounded-2xl border border-dashed border-gray-300 relative">
@@ -155,7 +166,7 @@ export const StepFourContent = () => {
             </Button>
           </div>
 
-          <CourseContentPreview data={previewData} />
+          <CourseContentPreview data={previewData} hideHeader={true} />
         </div>
       </div>
     </div>

@@ -17,6 +17,7 @@ import {
   TrophyOutlined,
 } from "@ant-design/icons";
 import type { UploadFile } from "antd/es/upload/interface";
+import type { ICreateCourseForm } from "../../../common/types/types";
 import dayjs from "dayjs";
 
 import { TiptapEditor } from "../common/tiptap-editor";
@@ -80,15 +81,18 @@ const getThumbnailUrl = (thumbnailList: UploadFile[] | undefined): string => {
   return file.thumbUrl || "https://placehold.co/600x400?text=No+Image";
 };
 
-const CourseInfoPreview = () => {
-  const form = Form.useFormInstance();
-  const watchedValues = Form.useWatch([], form);
-  const { title, categories, description, thumbnail, timeRange } =
-    watchedValues || {};
-  const thumbUrl = getThumbnailUrl(thumbnail);
+interface CourseBasicInfoCardProps {
+  data: ICreateCourseForm & {
+    startTime?: string;
+    endTime?: string;
+  };
+}
+
+export const CourseBasicInfoCard = ({ data }: CourseBasicInfoCardProps) => {
+  const thumbUrl = getThumbnailUrl(data.thumbnail);
 
   return (
-    <Card className="shadow-sm mb-8 bg-white/50 backdrop-blur-sm">
+    <Card className="shadow-sm mb-8 bg-white/50 backdrop-blur-sm" title="Thông tin cơ bản">
       <Row gutter={[32, 24]}>
         <Col xs={24} md={8}>
           <div className="rounded-xl overflow-hidden border border-gray-100 shadow-sm aspect-video group relative">
@@ -105,12 +109,12 @@ const CourseInfoPreview = () => {
         <Col xs={24} md={16} className="flex flex-col gap-4">
           <div>
             <Typography.Title level={2} className="m-0 text-gray-800 font-bold">
-              {title || <span className="text-gray-300">Tiêu đề khóa học</span>}
+              {data.title || <span className="text-gray-300">Tiêu đề khóa học</span>}
             </Typography.Title>
 
             <div className="flex gap-2 mt-3 flex-wrap items-center">
-              {Array.isArray(categories) && categories.length > 0 ? (
-                categories.map((cat: number) => (
+              {Array.isArray(data.categories) && data.categories.length > 0 ? (
+                data.categories.map((cat: number) => (
                   <Tag
                     key={cat}
                     color="purple"
@@ -119,23 +123,35 @@ const CourseInfoPreview = () => {
                     {getLabelFromValue(cat, COURSE_CATEGORIES)}
                   </Tag>
                 ))
+              ) : data.category ? (
+                <Tag color="purple" className="px-3 py-1 text-sm rounded-full font-medium">
+                  {data.category}
+                </Tag>
               ) : (
-                <Tag
-                  color="purple"
-                  className="px-3 py-1 text-sm rounded-full font-medium"
-                >
+                <Tag color="purple" className="px-3 py-1 text-sm rounded-full font-medium">
                   Chung
                 </Tag>
               )}
 
-              {timeRange && timeRange[0] && timeRange[1] && (
+              {data.timeRange && data.timeRange[0] && data.timeRange[1] && (
                 <Tag
                   icon={<CalendarOutlined />}
                   color="blue"
                   className="px-3 py-1 text-sm rounded-full"
                 >
-                  {dayjs(timeRange[0]).format("DD/MM/YYYY")} -{" "}
-                  {dayjs(timeRange[1]).format("DD/MM/YYYY")}
+                  {dayjs(data.timeRange[0]).format("DD/MM/YYYY")} -{" "}
+                  {dayjs(data.timeRange[1]).format("DD/MM/YYYY")}
+                </Tag>
+              )}
+
+              {data.startTime && data.endTime && (
+                <Tag
+                  icon={<CalendarOutlined />}
+                  color="blue"
+                  className="px-3 py-1 text-sm rounded-full"
+                >
+                  {dayjs(data.startTime).format("DD/MM/YYYY")} -{" "}
+                  {dayjs(data.endTime).format("DD/MM/YYYY")}
                 </Tag>
               )}
             </div>
@@ -148,7 +164,10 @@ const CourseInfoPreview = () => {
             >
               Giới thiệu
             </Typography.Text>
-            <TiptapEditor value={description} readOnly={true} />
+            <div
+              className="prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: data.description || "<i>Chưa có mô tả</i>" }}
+            />
           </div>
         </Col>
       </Row>
@@ -157,10 +176,6 @@ const CourseInfoPreview = () => {
 };
 
 export const CourseInfoSection = ({ readOnly = false }: Props) => {
-  if (readOnly) {
-    return <CourseInfoPreview />;
-  }
-
   return (
     <Card title="Thông tin cơ bản" className="shadow-sm mb-6 rounded-lg">
       <Row gutter={[32, 24]}>
@@ -188,6 +203,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
                 icon={<FileImageOutlined className="text-gray-400 text-5xl" />}
                 label="Tải ảnh bìa"
                 apiCall={uploadImageAPI}
+                disabled={readOnly}
               />
             </Form.Item>
           </Form.Item>
@@ -199,7 +215,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
             label="Tên khoá học"
             rules={[{ required: true, message: "Nhập tên khóa học" }]}
           >
-            <Input placeholder="Nhập tên khóa học..." />
+            <Input placeholder="Nhập tên khóa học..." disabled={readOnly} />
           </Form.Item>
 
           <Form.Item
@@ -207,7 +223,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
             label="Loại khoá học"
             initialValue={COURSE_TYPE.OBLIGATORY.value}
           >
-            <Radio.Group>
+            <Radio.Group disabled={readOnly}>
               <Radio value={COURSE_TYPE.OBLIGATORY.value}>
                 {COURSE_TYPE.OBLIGATORY.label}
               </Radio>
@@ -228,6 +244,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
               mode="multiple"
               placeholder="Chọn chủ đề..."
               options={COURSE_CATEGORIES}
+              disabled={readOnly}
             />
           </Form.Item>
 
@@ -242,6 +259,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
               placeholder="Chọn thời gian phát hành"
               className="w-full"
               disabledDate={disablePastDates}
+              disabled={readOnly}
             />
           </Form.Item>
 
@@ -251,7 +269,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
               initialValue={COURSE_TIME_STATE_TYPE.CUSTOMIZE.value}
               className="mb-2"
             >
-              <Radio.Group>
+              <Radio.Group disabled={readOnly}>
                 <Radio value={COURSE_TIME_STATE_TYPE.CUSTOMIZE.value}>
                   {COURSE_TIME_STATE_TYPE.CUSTOMIZE.label}
                 </Radio>
@@ -288,6 +306,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
                       ]}
                       className="w-full"
                       disabledDate={disablePastDates}
+                      disabled={readOnly}
                     />
                   </Form.Item>
                 ) : null;
@@ -301,7 +320,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
               initialValue={COURSE_END_PRIZE.NONE.value}
               className="mb-2"
             >
-              <Radio.Group>
+              <Radio.Group disabled={readOnly}>
                 <Radio value={COURSE_END_PRIZE.BADGE.value}>
                   {COURSE_END_PRIZE.BADGE.label}
                 </Radio>
@@ -346,6 +365,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
                         }
                         label="Tải ảnh huy chương"
                         apiCall={uploadImageAPI}
+                        disabled={readOnly}
                       />
                     </Form.Item>
                   </div>
@@ -359,7 +379,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
             label="Học theo thứ tự"
             initialValue={LEARN_ORDER.YES.value}
           >
-            <Radio.Group>
+            <Radio.Group disabled={readOnly}>
               <Radio value={LEARN_ORDER.YES.value}>
                 {LEARN_ORDER.YES.label}
               </Radio>
@@ -379,7 +399,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
             ]}
             validateTrigger="onSubmit"
           >
-            <TiptapEditor placeholder="Nhập mô tả..." />
+            <TiptapEditor placeholder="Nhập mô tả..." readOnly={readOnly} />
           </Form.Item>
         </Col>
       </Row>

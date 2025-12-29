@@ -17,7 +17,6 @@ import type {
   LessonTypeType,
 } from "../../../common/types/types";
 import type { ReactNode } from "react";
-import type { RadioChangeEvent } from "antd";
 
 import { uploadDocumentAPI, uploadVideoChunkAPI } from "../../services/api";
 
@@ -82,24 +81,20 @@ export const LessonItem = memo(
       remove(lessonIndex);
     }, [remove, lessonIndex]);
 
-    const handleTypeChange = useCallback(
-      (e: RadioChangeEvent) => {
-        const newType = e.target.value as LessonTypeType;
-        form.setFieldValue(
-          ["chapters", chapterIndex, "lessons", lessonIndex, "videoFile"],
-          undefined
-        );
-        form.setFieldValue(
-          ["chapters", chapterIndex, "lessons", lessonIndex, "docFile"],
-          undefined
-        );
-        form.setFieldValue(
-          ["chapters", chapterIndex, "lessons", lessonIndex, "slideFile"],
-          undefined
-        );
-      },
-      [form, chapterIndex, lessonIndex]
-    );
+    const handleTypeChange = useCallback(() => {
+      form.setFieldValue(
+        ["chapters", chapterIndex, "lessons", lessonIndex, "videoFile"],
+        undefined
+      );
+      form.setFieldValue(
+        ["chapters", chapterIndex, "lessons", lessonIndex, "docFile"],
+        undefined
+      );
+      form.setFieldValue(
+        ["chapters", chapterIndex, "lessons", lessonIndex, "slideFile"],
+        undefined
+      );
+    }, [form, chapterIndex, lessonIndex]);
 
     return (
       <div className="group relative bg-slate-50 rounded-xl border border-slate-200 p-4 mb-4 hover:border-blue-300 hover:shadow-md transition-all duration-300">

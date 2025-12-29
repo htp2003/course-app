@@ -1,6 +1,6 @@
 import { useMemo, useDeferredValue } from "react";
 import { Tree, Form } from "antd";
-import { DownOutlined, AuditOutlined } from "@ant-design/icons";
+import { DownOutlined, AuditOutlined, QuestionCircleOutlined } from "@ant-design/icons";
 import type { TreeProps } from "antd/es/tree";
 import type { IChapter } from "../../../common/types/types";
 import { handleDropLogic } from "../../utils/tree-utils";
@@ -35,7 +35,16 @@ export const QuizSidebarTree = ({ onSelectNode }: Props) => {
             </span>
           ),
           icon: <AuditOutlined className="text-blue-500" />,
-          isLeaf: true,
+          children: quiz.questions?.map((question, questionIdx) => ({
+            key: `${cIdx}-${lIdx}-${qIdx}-${questionIdx}`,
+            title: (
+              <span className="text-gray-600 text-sm">
+                {question.title || `Câu hỏi ${questionIdx + 1}`}
+              </span>
+            ),
+            icon: <QuestionCircleOutlined className="text-gray-400" />,
+            isLeaf: true,
+          })),
         })),
       })),
     }));

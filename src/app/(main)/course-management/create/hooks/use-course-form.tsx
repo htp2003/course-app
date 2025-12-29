@@ -132,7 +132,11 @@ export const useCourseForm = () => {
     const draft = localStorage.getItem(DRAFT_KEY);
     if (draft) {
       try {
-        const { step = 0, maxStep: storedMaxStep = 0, data } = JSON.parse(draft);
+        const {
+          step = 0,
+          maxStep: storedMaxStep = 0,
+          data,
+        } = JSON.parse(draft);
 
         if (data.timeRange && Array.isArray(data.timeRange)) {
           data.timeRange = [dayjs(data.timeRange[0]), dayjs(data.timeRange[1])];
@@ -201,17 +205,33 @@ export const useCourseForm = () => {
           chapter.lessons = chapter.lessons.map((lesson: ILesson) => {
             const serializedLesson = { ...lesson } as ILesson;
 
-            if (serializedLesson.docFile && Array.isArray(serializedLesson.docFile)) {
-              serializedLesson.docFile = serializedLesson.docFile.map(serializeFile);
+            if (
+              serializedLesson.docFile &&
+              Array.isArray(serializedLesson.docFile)
+            ) {
+              serializedLesson.docFile =
+                serializedLesson.docFile.map(serializeFile);
             }
-            if (serializedLesson.slideFile && Array.isArray(serializedLesson.slideFile)) {
-              serializedLesson.slideFile = serializedLesson.slideFile.map(serializeFile);
+            if (
+              serializedLesson.slideFile &&
+              Array.isArray(serializedLesson.slideFile)
+            ) {
+              serializedLesson.slideFile =
+                serializedLesson.slideFile.map(serializeFile);
             }
-            if (serializedLesson.videoFile && Array.isArray(serializedLesson.videoFile)) {
-              serializedLesson.videoFile = serializedLesson.videoFile.map(serializeFile);
+            if (
+              serializedLesson.videoFile &&
+              Array.isArray(serializedLesson.videoFile)
+            ) {
+              serializedLesson.videoFile =
+                serializedLesson.videoFile.map(serializeFile);
             }
-            if (serializedLesson.refDocFile && Array.isArray(serializedLesson.refDocFile)) {
-              serializedLesson.refDocFile = serializedLesson.refDocFile.map(serializeFile);
+            if (
+              serializedLesson.refDocFile &&
+              Array.isArray(serializedLesson.refDocFile)
+            ) {
+              serializedLesson.refDocFile =
+                serializedLesson.refDocFile.map(serializeFile);
             }
 
             return serializedLesson;
@@ -276,6 +296,8 @@ export const useCourseForm = () => {
               paths.push([...lessonPath, "docFile"]);
             } else if (less.type === "slide") {
               paths.push([...lessonPath, "slideFile"]);
+            } else if (less.type === "video") {
+              paths.push([...lessonPath, "videoFile"]);
             }
           });
         }

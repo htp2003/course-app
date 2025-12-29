@@ -6,7 +6,10 @@ import {
   VideoCameraOutlined,
   DesktopOutlined,
 } from "@ant-design/icons";
-import { UPLOAD_CONFIG, ASPECT_RATIOS } from "../../../common/constants/constants";
+import {
+  UPLOAD_CONFIG,
+  ASPECT_RATIOS,
+} from "../../../common/constants/constants";
 import { normFile } from "../../../common/utils/utils";
 import { CommonFileUpload } from "../common/common-file-upload";
 import type {
@@ -132,14 +135,17 @@ export const LessonItem = memo(
         </div>
 
         <div className="bg-white rounded-lg border border-slate-100 p-3 shadow-sm">
-          <Row gutter={[0, 24]}> {/* Tăng khoảng cách hàng để thoáng hơn khi xếp dọc */}
-            {/* PHẦN NỘI DUNG CHÍNH */}
+          <Row gutter={[0, 24]}>
             <Col span={24} className="border-b border-slate-100 pb-6">
               <Form.Item
                 noStyle
-                shouldUpdate={(prev: ICreateCourseForm, curr: ICreateCourseForm) => {
+                shouldUpdate={(
+                  prev: ICreateCourseForm,
+                  curr: ICreateCourseForm
+                ) => {
                   return (
-                    prev.chapters?.[chapterIndex]?.lessons?.[lessonIndex]?.type !==
+                    prev.chapters?.[chapterIndex]?.lessons?.[lessonIndex]
+                      ?.type !==
                     curr.chapters?.[chapterIndex]?.lessons?.[lessonIndex]?.type
                   );
                 }}
@@ -159,18 +165,28 @@ export const LessonItem = memo(
                   return (
                     <div className="h-full flex flex-col">
                       <div className="flex items-center gap-2 mb-3">
-                        <Tag color="blue" className="m-0 border-0 bg-blue-50 text-blue-600 font-bold">
+                        <Tag
+                          color="blue"
+                          className="m-0 border-0 bg-blue-50 text-blue-600 font-bold"
+                        >
                           CHÍNH
                         </Tag>
-                        <span className="text-xs text-slate-500 font-medium">Nội dung bài học chính</span>
+                        <span className="text-xs text-slate-500 font-medium">
+                          Nội dung bài học chính
+                        </span>
                       </div>
 
                       <div className="flex-1">
                         <Form.Item
-                          name={[lessonIndex, config.field]} // config.field sẽ là videoFile, docFile hoặc slideFile
+                          name={[lessonIndex, config.field]}
                           getValueFromEvent={normFile}
                           className="mb-0 h-full"
-                          rules={[{ required: type !== "video", message: "Vui lòng tải lên nội dung chính" }]}
+                          rules={[
+                            {
+                              required: true,
+                              message: "Vui lòng tải lên nội dung chính",
+                            },
+                          ]}
                         >
                           <CommonFileUpload
                             accept={config.ACCEPT}
@@ -184,7 +200,7 @@ export const LessonItem = memo(
                             label={`Tải lên ${config.label}`}
                             checkRatio={config.checkRatio}
                             aspectRatio={config.aspectRatio}
-                            apiCall={config.apiCall} // Rất quan trọng để upload hoạt động
+                            apiCall={config.apiCall}
                           />
                         </Form.Item>
                       </div>
@@ -194,14 +210,15 @@ export const LessonItem = memo(
               </Form.Item>
             </Col>
 
-            {/* PHẦN TÀI LIỆU PHỤ */}
             <Col span={24}>
               <div className="h-full flex flex-col w-full">
                 <div className="flex items-center gap-2 mb-3">
                   <Tag className="m-0 border-0 bg-slate-100 text-slate-500 font-bold">
                     PHỤ
                   </Tag>
-                  <span className="text-xs text-slate-400 font-medium">Tài liệu bổ trợ (không bắt buộc)</span>
+                  <span className="text-xs text-slate-400 font-medium">
+                    Tài liệu bổ trợ (không bắt buộc)
+                  </span>
                 </div>
                 <div className="flex-1 w-full">
                   <Form.Item
@@ -216,9 +233,11 @@ export const LessonItem = memo(
                       listType="picture"
                       height={150}
                       maxCount={1}
-                      icon={<FileTextOutlined className="text-2xl text-green-500" />}
+                      icon={
+                        <FileTextOutlined className="text-2xl text-green-500" />
+                      }
                       label="Tải lên tài liệu bổ trợ"
-                      apiCall={uploadDocumentAPI} // Đảm bảo gọi đúng API upload tài liệu
+                      apiCall={uploadDocumentAPI}
                     />
                   </Form.Item>
                 </div>

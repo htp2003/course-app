@@ -8,9 +8,13 @@ import type {
   QuestionType,
 } from "../types/types";
 import type { TCourseDetailResponse } from "../types/api-response";
+import {
+  API_LESSON_FILE_TYPE,
+  API_LESSON_TYPE,
+  API_QUESTION_TYPE,
+} from "../constants/constants";
 
 type TApiDetailData = TCourseDetailResponse["data"];
-
 
 const createMockFile = (
   url: string,
@@ -59,9 +63,11 @@ export const mapApiToUiForm = (apiData: TApiDetailData): ICreateCourseForm => {
               f.mediaFile.id ?? f.mediaFileId,
               f.mediaFile.fileName
             );
-            if (f.type === 1) videoFiles.push(fileObj);
-            else if (f.type === 2) docFiles.push(fileObj);
-            else if (f.type === 3) slideFiles.push(fileObj);
+            if (f.type === API_LESSON_FILE_TYPE.VIDEO) videoFiles.push(fileObj);
+            else if (f.type === API_LESSON_FILE_TYPE.DOCUMENT)
+              docFiles.push(fileObj);
+            else if (f.type === API_LESSON_FILE_TYPE.SLIDE)
+              slideFiles.push(fileObj);
           }
         });
       }
@@ -74,7 +80,8 @@ export const mapApiToUiForm = (apiData: TApiDetailData): ICreateCourseForm => {
             id: exam.id,
             title: exam.title,
             questions: (exam.quizzes || []).map((q) => {
-              const qType: QuestionType = q.type === 2 ? "essay" : "choice";
+              const qType: QuestionType =
+                q.type === API_QUESTION_TYPE.ESSAY ? "essay" : "choice";
 
               return {
                 id: q.id,
@@ -93,8 +100,8 @@ export const mapApiToUiForm = (apiData: TApiDetailData): ICreateCourseForm => {
       }
 
       let uiType: LessonTypeType = "video";
-      if (less.type === 2) uiType = "document";
-      if (less.type === 3) uiType = "slide";
+      if (less.type === API_LESSON_TYPE.DOCUMENT) uiType = "document";
+      if (less.type === API_LESSON_TYPE.SLIDE) uiType = "slide";
 
       return {
         id: less.id,

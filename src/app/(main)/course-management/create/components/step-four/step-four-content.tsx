@@ -52,8 +52,7 @@ const getPreviewUrl = (fileList: UploadFile[] | undefined): string => {
   if (file.originFileObj) {
     try {
       return URL.createObjectURL(file.originFileObj as Blob);
-    } catch {
-    }
+    } catch {}
   }
 
   return "";
@@ -150,7 +149,7 @@ export const StepFourContent = () => {
         </div>
 
         {/* Step 1: Basic Information (Read-only) */}
-        <CourseInfoSection readOnly={true} />
+        <CourseInfoSection isPreview={true} />
 
         {/* Course Content Preview */}
         <div className="text-center mb-6 mt-10">

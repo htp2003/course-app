@@ -7,6 +7,10 @@ import type { UploadFile } from "antd/es/upload/interface";
 
 import { createCourseAPI } from "../services/api";
 import { getErrorMessage } from "../../common/utils/utils";
+import {
+  COURSE_END_PRIZE,
+  COURSE_TIME_STATE_TYPE,
+} from "../../common/constants/constants";
 import type {
   ICreateCourseForm,
   ILesson,
@@ -138,46 +142,53 @@ export const useCourseForm = () => {
           data,
         } = JSON.parse(draft);
 
-        if (data.timeRange && Array.isArray(data.timeRange)) {
-          data.timeRange = [dayjs(data.timeRange[0]), dayjs(data.timeRange[1])];
-        }
+        const transformedData = {
+          ...data,
+          timeRange:
+            data.timeRange && Array.isArray(data.timeRange)
+              ? [dayjs(data.timeRange[0]), dayjs(data.timeRange[1])]
+              : data.timeRange,
+          publishAt: data.publishAt ? dayjs(data.publishAt) : data.publishAt,
+          thumbnail:
+            data.thumbnail && Array.isArray(data.thumbnail)
+              ? data.thumbnail.map(deserializeFile)
+              : data.thumbnail,
+          courseBadgeFile:
+            data.courseBadgeFile && Array.isArray(data.courseBadgeFile)
+              ? data.courseBadgeFile.map(deserializeFile)
+              : data.courseBadgeFile,
+          chapters:
+            data.chapters && Array.isArray(data.chapters)
+              ? data.chapters.map((chapter: IChapter) => ({
+                  ...chapter,
+                  lessons:
+                    chapter.lessons && Array.isArray(chapter.lessons)
+                      ? chapter.lessons.map((lesson: ILesson) => ({
+                          ...lesson,
+                          docFile:
+                            lesson.docFile && Array.isArray(lesson.docFile)
+                              ? lesson.docFile.map(deserializeFile)
+                              : lesson.docFile,
+                          slideFile:
+                            lesson.slideFile && Array.isArray(lesson.slideFile)
+                              ? lesson.slideFile.map(deserializeFile)
+                              : lesson.slideFile,
+                          videoFile:
+                            lesson.videoFile && Array.isArray(lesson.videoFile)
+                              ? lesson.videoFile.map(deserializeFile)
+                              : lesson.videoFile,
+                          refDocFile:
+                            lesson.refDocFile &&
+                            Array.isArray(lesson.refDocFile)
+                              ? lesson.refDocFile.map(deserializeFile)
+                              : lesson.refDocFile,
+                        }))
+                      : chapter.lessons,
+                }))
+              : data.chapters,
+        };
 
-        if (data.publishAt) {
-          data.publishAt = dayjs(data.publishAt);
-        }
-
-        if (data.thumbnail && Array.isArray(data.thumbnail)) {
-          data.thumbnail = data.thumbnail.map(deserializeFile);
-        }
-
-        if (data.courseBadgeFile && Array.isArray(data.courseBadgeFile)) {
-          data.courseBadgeFile = data.courseBadgeFile.map(deserializeFile);
-        }
-
-        if (data.chapters && Array.isArray(data.chapters)) {
-          data.chapters = data.chapters.map((chapter: IChapter) => {
-            if (chapter.lessons && Array.isArray(chapter.lessons)) {
-              chapter.lessons = chapter.lessons.map((lesson: ILesson) => {
-                if (lesson.docFile && Array.isArray(lesson.docFile)) {
-                  lesson.docFile = lesson.docFile.map(deserializeFile);
-                }
-                if (lesson.slideFile && Array.isArray(lesson.slideFile)) {
-                  lesson.slideFile = lesson.slideFile.map(deserializeFile);
-                }
-                if (lesson.videoFile && Array.isArray(lesson.videoFile)) {
-                  lesson.videoFile = lesson.videoFile.map(deserializeFile);
-                }
-                if (lesson.refDocFile && Array.isArray(lesson.refDocFile)) {
-                  lesson.refDocFile = lesson.refDocFile.map(deserializeFile);
-                }
-                return lesson;
-              });
-            }
-            return chapter;
-          });
-        }
-
-        form.setFieldsValue(data);
+        form.setFieldsValue(transformedData);
         setCurrentStep(step);
         setMaxStep(Math.max(storedMaxStep, step));
       } catch (e) {
@@ -266,11 +277,11 @@ export const useCourseForm = () => {
         "isLearnInOrder",
       ];
 
-      if (timeStateType === 1) {
+      if (timeStateType === COURSE_TIME_STATE_TYPE.CUSTOMIZE.value) {
         baseFields.push("timeRange");
       }
 
-      if (isHasBadge === 1) {
+      if (isHasBadge === COURSE_END_PRIZE.BADGE.value) {
         baseFields.push("courseBadgeFile");
       }
 

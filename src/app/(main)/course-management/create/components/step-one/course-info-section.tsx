@@ -6,22 +6,12 @@ import {
   Row,
   Col,
   Typography,
-  Tag,
-  Image,
   DatePicker,
   Radio,
 } from "antd";
-import {
-  FileImageOutlined,
-  CalendarOutlined,
-  TrophyOutlined,
-} from "@ant-design/icons";
-import type { UploadFile } from "antd/es/upload/interface";
-import type { ICreateCourseForm } from "../../../common/types/types";
-import dayjs from "dayjs";
-
+import { FileImageOutlined, TrophyOutlined } from "@ant-design/icons";
 import { TiptapEditor } from "../common/tiptap-editor";
-import { CommonFileUpload } from "../common/common-file-upload";
+import { ImageUpload } from "../common/image-upload";
 import {
   COURSE_CATEGORIES,
   UPLOAD_CONFIG,
@@ -31,151 +21,17 @@ import {
   LEARN_ORDER,
   COURSE_TYPE,
 } from "../../../common/constants/constants";
-import { getLabelFromValue, disablePastDates, normFile } from "../../../common/utils/utils";
+import { disablePastDates, normFile } from "../../../common/utils/utils";
 
 import { uploadImageAPI } from "../../services/api";
-
-interface UploadResponse {
-  result?: {
-    rawUrl?: string;
-    compressUrl?: string;
-    url?: string;
-  };
-  data?: {
-    rawUrl?: string;
-    url?: string;
-  };
-}
 
 const { RangePicker } = DatePicker;
 
 interface Props {
-  readOnly?: boolean;
+  isPreview?: boolean;
 }
 
-const getThumbnailUrl = (thumbnailList: UploadFile[] | undefined): string => {
-  if (!thumbnailList || thumbnailList.length === 0) {
-    return "https://placehold.co/600x400?text=No+Image";
-  }
-  const file = thumbnailList[0];
-
-  if (file.url) return file.url;
-
-  if (file.response) {
-    const resp = file.response as UploadResponse;
-    if (resp.result?.rawUrl) return resp.result.rawUrl;
-    if (resp.result?.compressUrl) return resp.result.compressUrl;
-    if (resp.result?.url) return resp.result.url;
-    if (resp.data?.rawUrl) return resp.data.rawUrl;
-    if (resp.data?.url) return resp.data.url;
-  }
-
-  const originFile = file.originFileObj;
-  if (originFile) {
-    try {
-      return URL.createObjectURL(originFile as Blob);
-    } catch {
-    }
-  }
-
-  return file.thumbUrl || "https://placehold.co/600x400?text=No+Image";
-};
-
-interface CourseBasicInfoCardProps {
-  data: ICreateCourseForm & {
-    startTime?: string;
-    endTime?: string;
-  };
-}
-
-export const CourseBasicInfoCard = ({ data }: CourseBasicInfoCardProps) => {
-  const thumbUrl = getThumbnailUrl(data.thumbnail);
-
-  return (
-    <Card className="shadow-sm mb-8 bg-white/50 backdrop-blur-sm" title="Thông tin cơ bản">
-      <Row gutter={[32, 24]}>
-        <Col xs={24} md={8}>
-          <div className="rounded-xl overflow-hidden border border-gray-100 shadow-sm aspect-video group relative">
-            <Image
-              src={thumbUrl}
-              alt="Course Thumbnail"
-              width="100%"
-              height="100%"
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              preview={false}
-            />
-          </div>
-        </Col>
-        <Col xs={24} md={16} className="flex flex-col gap-4">
-          <div>
-            <Typography.Title level={2} className="m-0 text-gray-800 font-bold">
-              {data.title || <span className="text-gray-300">Tiêu đề khóa học</span>}
-            </Typography.Title>
-
-            <div className="flex gap-2 mt-3 flex-wrap items-center">
-              {Array.isArray(data.categories) && data.categories.length > 0 ? (
-                data.categories.map((cat: number) => (
-                  <Tag
-                    key={cat}
-                    color="purple"
-                    className="px-3 py-1 text-sm rounded-full font-medium"
-                  >
-                    {getLabelFromValue(cat, COURSE_CATEGORIES)}
-                  </Tag>
-                ))
-              ) : data.category ? (
-                <Tag color="purple" className="px-3 py-1 text-sm rounded-full font-medium">
-                  {data.category}
-                </Tag>
-              ) : (
-                <Tag color="purple" className="px-3 py-1 text-sm rounded-full font-medium">
-                  Chung
-                </Tag>
-              )}
-
-              {data.timeRange && data.timeRange[0] && data.timeRange[1] && (
-                <Tag
-                  icon={<CalendarOutlined />}
-                  color="blue"
-                  className="px-3 py-1 text-sm rounded-full"
-                >
-                  {dayjs(data.timeRange[0]).format("DD/MM/YYYY")} -{" "}
-                  {dayjs(data.timeRange[1]).format("DD/MM/YYYY")}
-                </Tag>
-              )}
-
-              {data.startTime && data.endTime && (
-                <Tag
-                  icon={<CalendarOutlined />}
-                  color="blue"
-                  className="px-3 py-1 text-sm rounded-full"
-                >
-                  {dayjs(data.startTime).format("DD/MM/YYYY")} -{" "}
-                  {dayjs(data.endTime).format("DD/MM/YYYY")}
-                </Tag>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-gray-50/80 p-5 rounded-xl border border-gray-100 flex-1">
-            <Typography.Text
-              type="secondary"
-              className="block mb-2 text-xs uppercase tracking-wider font-semibold"
-            >
-              Giới thiệu
-            </Typography.Text>
-            <div
-              className="prose prose-sm max-w-none"
-              dangerouslySetInnerHTML={{ __html: data.description || "<i>Chưa có mô tả</i>" }}
-            />
-          </div>
-        </Col>
-      </Row>
-    </Card>
-  );
-};
-
-export const CourseInfoSection = ({ readOnly = false }: Props) => {
+export const CourseInfoSection = ({ isPreview = false }: Props) => {
   return (
     <Card title="Thông tin cơ bản" className="shadow-sm mb-6 rounded-lg">
       <Row gutter={[32, 24]}>
@@ -190,20 +46,17 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
               noStyle
               rules={[{ required: true, message: "Vui lòng chọn ảnh bìa" }]}
             >
-              <CommonFileUpload
+              <ImageUpload
                 accept={UPLOAD_CONFIG.IMAGE.ACCEPT}
                 maxSizeMB={UPLOAD_CONFIG.IMAGE.MAX_SIZE_MB}
-                helperText={UPLOAD_CONFIG.IMAGE.HELPER_TEXT}
-                listType="picture"
-                maxCount={1}
-                height={250}
-                enableCrop={true}
-                checkRatio={false}
                 aspectRatio={ASPECT_RATIOS.VIDEO}
-                icon={<FileImageOutlined className="text-gray-400 text-5xl" />}
+                enableCrop
                 label="Tải ảnh bìa"
+                helperText={UPLOAD_CONFIG.IMAGE.HELPER_TEXT}
+                icon={<FileImageOutlined className="text-gray-400 text-3xl" />}
+                height={250}
                 apiCall={uploadImageAPI}
-                disabled={readOnly}
+                disabled={isPreview}
               />
             </Form.Item>
           </Form.Item>
@@ -215,7 +68,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
             label="Tên khoá học"
             rules={[{ required: true, message: "Nhập tên khóa học" }]}
           >
-            <Input placeholder="Nhập tên khóa học..." disabled={readOnly} />
+            <Input placeholder="Nhập tên khóa học..." disabled={isPreview} />
           </Form.Item>
 
           <Form.Item
@@ -223,7 +76,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
             label="Loại khoá học"
             initialValue={COURSE_TYPE.OBLIGATORY.value}
           >
-            <Radio.Group disabled={readOnly}>
+            <Radio.Group disabled={isPreview}>
               <Radio value={COURSE_TYPE.OBLIGATORY.value}>
                 {COURSE_TYPE.OBLIGATORY.label}
               </Radio>
@@ -237,14 +90,19 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
             name="categories"
             label="Chủ đề"
             rules={[
-              { required: true, type: "array", min: 1, message: "Chọn ít nhất 1 chủ đề" },
+              {
+                required: true,
+                type: "array",
+                min: 1,
+                message: "Chọn ít nhất 1 chủ đề",
+              },
             ]}
           >
             <Select
               mode="multiple"
               placeholder="Chọn chủ đề..."
               options={COURSE_CATEGORIES}
-              disabled={readOnly}
+              disabled={isPreview}
             />
           </Form.Item>
 
@@ -259,7 +117,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
               placeholder="Chọn thời gian phát hành"
               className="w-full"
               disabledDate={disablePastDates}
-              disabled={readOnly}
+              disabled={isPreview}
             />
           </Form.Item>
 
@@ -269,7 +127,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
               initialValue={COURSE_TIME_STATE_TYPE.CUSTOMIZE.value}
               className="mb-2"
             >
-              <Radio.Group disabled={readOnly}>
+              <Radio.Group disabled={isPreview}>
                 <Radio value={COURSE_TIME_STATE_TYPE.CUSTOMIZE.value}>
                   {COURSE_TIME_STATE_TYPE.CUSTOMIZE.label}
                 </Radio>
@@ -306,7 +164,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
                       ]}
                       className="w-full"
                       disabledDate={disablePastDates}
-                      disabled={readOnly}
+                      disabled={isPreview}
                     />
                   </Form.Item>
                 ) : null;
@@ -320,7 +178,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
               initialValue={COURSE_END_PRIZE.NONE.value}
               className="mb-2"
             >
-              <Radio.Group disabled={readOnly}>
+              <Radio.Group disabled={isPreview}>
                 <Radio value={COURSE_END_PRIZE.BADGE.value}>
                   {COURSE_END_PRIZE.BADGE.label}
                 </Radio>
@@ -352,20 +210,18 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
                       ]}
                       noStyle
                     >
-                      <CommonFileUpload
+                      <ImageUpload
                         accept={UPLOAD_CONFIG.IMAGE.ACCEPT}
                         maxSizeMB={UPLOAD_CONFIG.IMAGE.MAX_SIZE_MB}
+                        label="Tải ảnh huy chương"
                         helperText="Ảnh huy chương (PNG, JPG)"
-                        listType="picture"
-                        maxCount={1}
-                        height={180}
-                        width={220}
                         icon={
                           <TrophyOutlined className="text-yellow-500 text-3xl" />
                         }
-                        label="Tải ảnh huy chương"
+                        height={180}
+                        width={220}
                         apiCall={uploadImageAPI}
-                        disabled={readOnly}
+                        disabled={isPreview}
                       />
                     </Form.Item>
                   </div>
@@ -378,8 +234,9 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
             name="isLearnInOrder"
             label="Học theo thứ tự"
             initialValue={LEARN_ORDER.YES.value}
+            rules={[{ required: true, message: "Chọn hình thức học" }]}
           >
-            <Radio.Group disabled={readOnly}>
+            <Radio.Group disabled={isPreview}>
               <Radio value={LEARN_ORDER.YES.value}>
                 {LEARN_ORDER.YES.label}
               </Radio>
@@ -399,7 +256,7 @@ export const CourseInfoSection = ({ readOnly = false }: Props) => {
             ]}
             validateTrigger="onSubmit"
           >
-            <TiptapEditor placeholder="Nhập mô tả..." readOnly={readOnly} />
+            <TiptapEditor isPreview={isPreview} />
           </Form.Item>
         </Col>
       </Row>

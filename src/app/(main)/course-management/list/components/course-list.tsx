@@ -203,10 +203,9 @@ export const CourseList = () => {
       width: 140,
       render: (statusValue: number) => {
         const state = COURSE_STATUS_KEY_BY[statusValue];
-        if (!state) return <Tag>Không rõ</Tag>;
         return (
-          <Tag color={state.color} bordered={false}>
-            {state.label}
+          <Tag color={state?.color} bordered={false}>
+            {state?.label || statusValue}
           </Tag>
         );
       },

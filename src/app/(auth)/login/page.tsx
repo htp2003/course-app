@@ -1,50 +1,10 @@
-import { Button, Card, Form, Input, App, Typography } from "antd";
+import { Button, Card, Form, Input, Typography } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
-import { useAuth } from "../../../context/auth-context";
-import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
-import { loginAPI } from "./services/api";
-import type { TLoginRequest, TLoginResponse } from "./types";
+import type { TLoginRequest } from "./types";
+import { useLoginMutation } from "./hooks/use-login-mutation";
 
 export const LoginPage = () => {
-  const { login } = useAuth();
-  const { message } = App.useApp();
-  const navigate = useNavigate();
-
-  const loginMutation = useMutation({
-    mutationFn: (values: TLoginRequest) => loginAPI.login(values),
-    onSuccess: (data: TLoginResponse) => {
-      const res = data.result;
-
-      if (!res || !res.accessToken) {
-        message.error("Lỗi: Không tìm thấy Access Token trong phản hồi!");
-        return;
-      }
-
-      message.success("Đăng nhập thành công!");
-
-      const userProfile = {
-        id: res.id,
-        username: res.fullName,
-        fullName: res.fullName,
-        role: res.role,
-        avatar: "",
-      };
-
-      login(res.accessToken, userProfile);
-
-      navigate("/course-management/list");
-    },
-    onError: (error: unknown) => {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : typeof error === "string"
-          ? error
-          : "Đăng nhập thất bại";
-      message.error(errorMessage);
-    },
-  });
+  const loginMutation = useLoginMutation();
 
   const onFinish = (values: TLoginRequest) => {
     loginMutation.mutate(values);

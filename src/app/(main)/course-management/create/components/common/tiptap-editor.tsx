@@ -1,4 +1,4 @@
-import { useEffect, useMemo, memo, useTransition } from "react"; // 1. Import useTransition
+import { useEffect, useMemo, memo, useRef } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { RichTextProvider } from "reactjs-tiptap-editor";
 import "reactjs-tiptap-editor/style.css";
@@ -6,12 +6,7 @@ import { Document } from "@tiptap/extension-document";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Text } from "@tiptap/extension-text";
 import { TextStyle } from "@tiptap/extension-text-style";
-import {
-  Dropcursor,
-  Gapcursor,
-  Placeholder,
-  TrailingNode,
-} from "@tiptap/extensions";
+import { Dropcursor, Gapcursor, TrailingNode } from "@tiptap/extensions";
 import { HardBreak } from "@tiptap/extension-hard-break";
 import { ListItem } from "@tiptap/extension-list";
 import {
@@ -45,16 +40,11 @@ import {
 } from "reactjs-tiptap-editor/orderedlist";
 import { RichTextAlign, TextAlign } from "reactjs-tiptap-editor/textalign";
 import { Link, RichTextLink } from "reactjs-tiptap-editor/link";
-import { Image, RichTextImage } from "reactjs-tiptap-editor/image";
-import { RichTextVideo, Video } from "reactjs-tiptap-editor/video";
 import { RichTextClear, Clear } from "reactjs-tiptap-editor/clear";
 import {
-  RichTextBubbleImage,
   RichTextBubbleLink,
   RichTextBubbleText,
-  RichTextBubbleVideo,
 } from "reactjs-tiptap-editor/bubble";
-import { uploadImageAPI, uploadDocumentAPI } from "../../services/api";
 import Youtube from "@tiptap/extension-youtube";
 
 const YOUTUBE_ID_REGEX =
@@ -69,37 +59,6 @@ const toYouTubeEmbedUrl = (url: string, nocookie = true) => {
   const id = extractYouTubeId(url);
   if (!id) return null;
   return `https://www.youtube${nocookie ? "-nocookie" : ""}.com/embed/${id}`;
-};
-
-const uploadToServer = async (files: File): Promise<string> => {
-  try {
-    // Determine if it's an image or document based on file type
-    const isImage = files.type.startsWith("image/");
-
-    const response = isImage
-      ? await uploadImageAPI(files)
-      : await uploadDocumentAPI(files);
-
-    const data = response.data;
-
-    // Extract URL from response - adjust based on your API response structure
-    const url =
-      (data as any)?.result?.rawUrl ||
-      (data as any)?.result?.url ||
-      (data as any)?.url ||
-      (data as any)?.uri ||
-      "";
-
-    if (!url) {
-      throw new Error("No URL in upload response");
-    }
-
-    return url;
-  } catch (error) {
-    console.error("Upload error:", error);
-    // Fallback to blob URL if upload fails
-    return URL.createObjectURL(files);
-  }
 };
 
 const baseExtensions = [
@@ -128,175 +87,150 @@ const baseExtensions = [
   OrderedList,
   Emoji,
   Link.configure({ openOnClick: false }),
-  Image.configure({ upload: uploadToServer }),
-  Video.configure({ upload: uploadToServer }),
   Youtube.configure({ nocookie: true, controls: true }),
 ];
 
-const CustomToolbar = memo(() => {
-  return (
-    <div className="flex items-center gap-1 flex-wrap p-2 border-b border-gray-200 bg-gray-50/50 sticky top-0 z-10">
-      <div className="flex gap-1 pr-2 border-r border-gray-300">
-        <RichTextUndo />
-        <RichTextRedo />
-        <RichTextClear />
-      </div>
-      <div className="flex gap-1 pr-2 border-r border-gray-300">
-        <RichTextFontFamily />
-        <RichTextFontSize />
-        <RichTextHeading />
-      </div>
-      <div className="flex gap-1 pr-2 border-r border-gray-300">
-        <RichTextBold />
-        <RichTextItalic />
-        <RichTextUnderline />
-        <RichTextStrike />
-      </div>
-      <div className="flex gap-1 pr-2 border-r border-gray-300">
-        <RichTextColor />
-        <RichTextHighlight />
-        <RichTextEmoji />
-      </div>
-      <div className="flex gap-1 pr-2 border-r border-gray-300">
-        <RichTextAlign />
-        <RichTextBulletList />
-        <RichTextOrderedList />
-      </div>
-      <div className="flex gap-1">
-        <RichTextLink />
-        <RichTextImage />
-        <RichTextVideo />
-      </div>
+const CustomToolbar = memo(() => (
+  <div className="flex items-center gap-1 flex-wrap p-2 border-b border-gray-200 bg-gray-50/50 sticky top-0 z-10">
+    <div className="flex gap-1 pr-2 border-r border-gray-300">
+      <RichTextUndo />
+      <RichTextRedo />
+      <RichTextClear />
     </div>
-  );
-});
+    <div className="flex gap-1 pr-2 border-r border-gray-300">
+      <RichTextFontFamily />
+      <RichTextFontSize />
+      <RichTextHeading />
+    </div>
+    <div className="flex gap-1 pr-2 border-r border-gray-300">
+      <RichTextBold />
+      <RichTextItalic />
+      <RichTextUnderline />
+      <RichTextStrike />
+    </div>
+    <div className="flex gap-1 pr-2 border-r border-gray-300">
+      <RichTextColor />
+      <RichTextHighlight />
+      <RichTextEmoji />
+    </div>
+    <div className="flex gap-1 pr-2 border-r border-gray-300">
+      <RichTextAlign />
+      <RichTextBulletList />
+      <RichTextOrderedList />
+    </div>
+    <div className="flex gap-1">
+      <RichTextLink />
+    </div>
+  </div>
+));
 
 interface Props {
   value?: string;
   onChange?: (value: string) => void;
-  placeholder?: string;
-  readOnly?: boolean;
+  isPreview?: boolean;
 }
 
-export const TiptapEditor = ({
-  value,
-  onChange,
-  placeholder,
-  readOnly = false,
-}: Props) => {
-  const [, startTransition] = useTransition();
+export const TiptapEditor = memo(
+  ({ value, onChange, isPreview = false }: Props) => {
+    const isInternalUpdate = useRef(false);
 
-  const extensions = useMemo(() => {
-    return [
-      ...baseExtensions,
-      Placeholder.configure({
-        // Ẩn placeholder khi editor không rỗng (ví dụ đã có video)
-        placeholder: ({ editor }) =>
-          editor.isEmpty
-            ? placeholder || "Nhập nội dung mô tả chi tiết..."
-            : "",
-        includeChildren: false,
-        showOnlyCurrent: false,
-        showOnlyWhenEditable: true,
-      }),
-    ];
-  }, [placeholder]);
+    const extensions = useMemo(() => [...baseExtensions], []);
 
-  const editor = useEditor(
-    {
-      editable: !readOnly,
-      content: value,
-      extensions: extensions,
-
-      immediatelyRender: false,
-      shouldRerenderOnTransaction: false,
-
-
-      editorProps: {
-        attributes: {
-          class: [
-            "prose prose-sm max-w-none min-h-[250px] p-4 focus:outline-none transition-all",
-            readOnly ? "bg-transparent px-0" : "bg-white",
-          ].join(" "),
+    const editor = useEditor(
+      {
+        editable: !isPreview,
+        content: value,
+        extensions,
+        immediatelyRender: false,
+        shouldRerenderOnTransaction: false,
+        editorProps: {
+          attributes: {
+            class: [
+              "prose prose-sm max-w-none min-h-[250px] p-4 focus:outline-none transition-all selection:bg-blue-600 selection:text-white text-slate-900",
+              isPreview ? "bg-gray-50/50 cursor-default" : "bg-white",
+            ].join(" "),
+          },
+        },
+        onUpdate: ({ editor }) => {
+          const html = editor.getHTML();
+          if (html !== value) {
+            isInternalUpdate.current = true;
+            onChange?.(html);
+            setTimeout(() => {
+              isInternalUpdate.current = false;
+            }, 0);
+          }
         },
       },
-      onUpdate: ({ editor }) => {
-        if (onChange) {
+      []
+    );
 
-          startTransition(() => {
-            onChange(editor.getHTML());
-          });
+    useEffect(() => {
+      if (editor && value !== undefined && !isInternalUpdate.current) {
+        const currentContent = editor.getHTML();
+        const normalizedValue = value === "" ? "<p></p>" : value;
+        if (currentContent !== normalizedValue) {
+          editor.commands.setContent(value, { emitUpdate: false });
         }
-      },
-    },
-    [extensions, readOnly]
-  );
-
-  useEffect(() => {
-
-    if (editor && value !== undefined && !editor.isDestroyed) {
-      if (editor.getHTML() !== value) {
-        editor.commands.setContent(value);
       }
-    }
-  }, [value, editor]);
+    }, [value, editor]);
 
-  useEffect(() => {
-    if (editor && !editor.isDestroyed) {
-      editor.setEditable(!readOnly);
-    }
-  }, [readOnly, editor]);
-
-  // Auto-embed YouTube when a link is pasted
-  useEffect(() => {
-    if (!editor || readOnly) return;
-    const dom = editor.view.dom as HTMLElement;
-
-    const onPaste = (e: ClipboardEvent) => {
-      const text = e.clipboardData?.getData("text/plain");
-      if (!text) return;
-      const embed = toYouTubeEmbedUrl(text, true);
-      if (embed) {
-        e.preventDefault();
-        editor
-          .chain()
-          .focus()
-          // width/height optional; let default render
-          .setYoutubeVideo({ src: embed })
-          .run();
+    useEffect(() => {
+      if (editor && !editor.isDestroyed) {
+        editor.setEditable(!isPreview);
       }
-    };
+    }, [isPreview, editor]);
 
-    dom.addEventListener("paste", onPaste as unknown as EventListener);
-    return () => dom.removeEventListener("paste", onPaste as unknown as EventListener);
-  }, [editor, readOnly]);
+    useEffect(() => {
+      if (!editor || isPreview) return;
+      const dom = editor.view.dom;
+      const onPaste = (e: ClipboardEvent) => {
+        const text = e.clipboardData?.getData("text/plain");
+        if (!text) return;
+        const embed = toYouTubeEmbedUrl(text, true);
+        if (embed) {
+          e.preventDefault();
+          editor.chain().focus().setYoutubeVideo({ src: embed }).run();
+        }
+      };
+      dom.addEventListener("paste", onPaste);
+      return () => dom.removeEventListener("paste", onPaste);
+    }, [editor, isPreview]);
 
-  if (!editor) return null;
+    if (!editor) return null;
 
-  if (readOnly) {
     return (
       <div
-        className="prose prose-sm max-w-none tiptap-renderer"
-        dangerouslySetInnerHTML={{
-          __html:
-            value || '<p class="text-gray-400 italic">Chưa có nội dung</p>',
-        }}
-      />
+        className={[
+          "tiptap-editor border rounded-lg overflow-hidden transition-all duration-300",
+          isPreview
+            ? "border-gray-200 bg-gray-50"
+            : "border-gray-300 bg-white shadow-sm hover:border-blue-400",
+        ].join(" ")}
+      >
+        <RichTextProvider editor={editor}>
+          <div className="flex flex-col w-full relative">
+            <div
+              className={
+                isPreview ? "pointer-events-none grayscale opacity-40" : ""
+              }
+            >
+              <CustomToolbar />
+            </div>
+
+            <EditorContent editor={editor} />
+
+            {!isPreview && (
+              <>
+                <RichTextBubbleText />
+                <RichTextBubbleLink />
+              </>
+            )}
+          </div>
+        </RichTextProvider>
+      </div>
     );
   }
+);
 
-  return (
-    <div className="tiptap-editor border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm hover:border-blue-400 transition-colors">
-      <RichTextProvider editor={editor}>
-        <div className="flex flex-col w-full">
-          <CustomToolbar />
-          <EditorContent editor={editor} />
-          <RichTextBubbleText />
-          <RichTextBubbleImage />
-          <RichTextBubbleVideo />
-          <RichTextBubbleLink />
-        </div>
-      </RichTextProvider>
-    </div>
-  );
-};
+TiptapEditor.displayName = "TiptapEditor";

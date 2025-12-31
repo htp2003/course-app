@@ -1,5 +1,5 @@
 import { memo, useCallback } from "react";
-import { Form, Input, Button, Card, Typography, Tooltip } from "antd";
+import { Form, Input, Button, Card, Tooltip } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { LessonItem } from "./lesson-item";
 
@@ -20,15 +20,10 @@ export const ChapterItem = memo(({ fieldIndex, remove }: Props) => {
       styles={{ body: { padding: "16px" } }}
     >
       <div className="flex items-center gap-3 mb-4 p-2 bg-indigo-50/50 rounded-lg border border-indigo-100">
-        <Typography.Text
-          strong
-          className="text-lg text-indigo-600 whitespace-nowrap"
-        >
-          Tên chương:
-        </Typography.Text>
-
         <Form.Item
-          
+          label="Tên chương"
+          colon={false}
+          labelCol={{ span: 24 }}
           name={[fieldIndex, "title"]}
           rules={[{ required: true, message: "Nhập tên chương" }]}
           className="mb-0 flex-1"

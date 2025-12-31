@@ -1,3 +1,5 @@
+import { keyBy } from "lodash";
+
 export const COURSE_LEVELS = [
   { label: "Người mới", value: 1 },
   { label: "Trung cấp", value: 2 },
@@ -17,6 +19,23 @@ export const LESSON_TYPES = [
   { label: "Tài liệu đọc", value: "document" },
   { label: "Slide thuyết trình", value: "slide" },
 ];
+
+export const API_LESSON_FILE_TYPE = {
+  VIDEO: 1,
+  DOCUMENT: 2,
+  SLIDE: 3,
+} as const;
+
+export const API_LESSON_TYPE = {
+  VIDEO: 1,
+  DOCUMENT: 2,
+  SLIDE: 3,
+} as const;
+
+export const API_QUESTION_TYPE = {
+  CHOICE: 1,
+  ESSAY: 2,
+} as const;
 
 export const QUESTION_TYPES = [
   { label: "Trắc nghiệm", value: "choice" },
@@ -69,10 +88,7 @@ export const COURSE_TYPE = {
 
 export const COURSE_TYPE_LIST = Object.values(COURSE_TYPE);
 
-export const COURSE_TYPE_KEY_BY = COURSE_TYPE_LIST.reduce((acc, item) => {
-  acc[item.value] = item;
-  return acc;
-}, {} as Record<number, (typeof COURSE_TYPE_LIST)[number]>);
+export const COURSE_TYPE_KEY_BY = keyBy(COURSE_TYPE_LIST, "value");
 
 export const COURSE_STATUS = {
   NEW: {
@@ -102,10 +118,7 @@ export const COURSE_STATUS = {
 
 export const COURSE_STATUS_LIST = Object.values(COURSE_STATUS);
 
-export const COURSE_STATUS_KEY_BY = COURSE_STATUS_LIST.reduce((acc, item) => {
-  acc[item.value] = item;
-  return acc;
-}, {} as Record<number, (typeof COURSE_STATUS_LIST)[number]>);
+export const COURSE_STATUS_KEY_BY = keyBy(COURSE_STATUS_LIST, "value");
 
 export const COURSE_TOPIC = {
   NUTRITION: { value: 101, label: "Dinh dưỡng" },

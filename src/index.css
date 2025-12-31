@@ -6,14 +6,14 @@
 .tiptap-renderer iframe[src*="youtube"],
 .tiptap-editor iframe[src*="youtu.be"],
 .tiptap-renderer iframe[src*="youtu.be"] {
-    width: 100% !important;
-    aspect-ratio: 16 / 9;
-    height: auto !important;
-    border: 0;
-    border-radius: 8px;
+  width: 100% !important;
+  aspect-ratio: 16 / 9;
+  height: auto !important;
+  border: 0;
+  border-radius: 8px;
 }
 
 .tiptap-editor iframe[src*="youtube"],
 .tiptap-editor iframe[src*="youtu.be"] {
-    margin: 8px 0;
+  margin: 8px 0;
 }

@@ -42,17 +42,11 @@ export const CourseFilter = ({ initialValues, onFilter, loading }: Props) => {
   };
 
   const handleFinish = (values: TFilterValues) => {
+    const { dateRange, ...rest } = values;
     const apiParams: Partial<TGetCoursesParams> = {
-      Title: values.Title,
-      Status: values.Status,
-      Type: values.Type,
-      Topics: values.Topics,
-      StartTime: values.dateRange
-        ? values.dateRange[0].format("YYYY-MM-DD")
-        : undefined,
-      EndTime: values.dateRange
-        ? values.dateRange[1].format("YYYY-MM-DD")
-        : undefined,
+      ...rest,
+      StartTime: dateRange ? dateRange[0].format("YYYY-MM-DD") : undefined,
+      EndTime: dateRange ? dateRange[1].format("YYYY-MM-DD") : undefined,
     };
     onFilter(apiParams);
   };

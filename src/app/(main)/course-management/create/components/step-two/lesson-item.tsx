@@ -6,12 +6,14 @@ import {
   VideoCameraOutlined,
   DesktopOutlined,
 } from "@ant-design/icons";
+import { LESSON_TYPES } from "../../../common/constants/constants";
 import {
   UPLOAD_CONFIG,
   ASPECT_RATIOS,
 } from "../../../common/constants/constants";
 import { normFile } from "../../../common/utils/utils";
-import { CommonFileUpload } from "../common/common-file-upload";
+import { FileUpload } from "../common/file-upload";
+import { ChunkFileUpload } from "../common/chunk-file-upload";
 import type {
   ICreateCourseForm,
   LessonTypeType,
@@ -117,10 +119,10 @@ export const LessonItem = memo(
         <div className="mb-4 pl-2">
           <Row gutter={[16, 16]} align="middle">
             <Col span={24}>
-              <div className="text-xs text-slate-400 font-semibold mb-1 uppercase tracking-wider ">
-                Tên bài học
-              </div>
               <Form.Item
+                label="Tên bài học"
+                colon={false}
+                labelCol={{ span: 24 }}
                 name={[lessonIndex, "title"]}
                 rules={[{ required: true, message: "Nhập tên" }]}
                 className="mb-0"
@@ -133,18 +135,21 @@ export const LessonItem = memo(
             </Col>
 
             <Col span={24}>
-              <div className="text-xs text-slate-400 font-semibold mb-1 uppercase tracking-wider">
-                Loại nội dung
-              </div>
               <Form.Item
+                label="Loại nội dung"
+                colon={false}
+                labelCol={{ span: 24 }}
                 name={[lessonIndex, "type"]}
                 initialValue="video"
                 className="mb-0"
+                rules={[{ required: true, message: "Chọn loại nội dung" }]}
               >
                 <Radio.Group className="w-full" onChange={handleTypeChange}>
-                  <Radio value="video">Video bài giảng</Radio>
-                  <Radio value="document">Tài liệu đọc</Radio>
-                  <Radio value="slide">Slide thuyết trình</Radio>
+                  {LESSON_TYPES.map((item) => (
+                    <Radio key={item.value} value={item.value}>
+                      {item.label}
+                    </Radio>
+                  ))}
                 </Radio.Group>
               </Form.Item>
             </Col>
@@ -205,20 +210,24 @@ export const LessonItem = memo(
                             },
                           ]}
                         >
-                          <CommonFileUpload
-                            accept={config.ACCEPT}
-                            maxSizeMB={config.MAX_SIZE_MB}
-                            helperText={config.HELPER_TEXT}
-                            listType="picture"
-                            height={150}
-                            maxCount={config.maxCount}
-                            multiple={config.maxCount > 1}
-                            icon={config.icon}
-                            label={`Tải lên ${config.label}`}
-                            checkRatio={config.checkRatio}
-                            aspectRatio={config.aspectRatio}
-                            apiCall={config.apiCall}
-                          />
+                          {type === "video" ? (
+                            <ChunkFileUpload
+                              accept={config.ACCEPT}
+                              maxSizeMB={config.MAX_SIZE_MB}
+                              maxCount={config.maxCount}
+                              apiCall={config.apiCall}
+                              height={200}
+                              placeholderSize={140}
+                            />
+                          ) : (
+                            <FileUpload
+                              accept={config.ACCEPT}
+                              maxSizeMB={config.MAX_SIZE_MB}
+                              maxCount={config.maxCount}
+                              multiple={config.maxCount > 1}
+                              apiCall={config.apiCall}
+                            />
+                          )}
                         </Form.Item>
                       </div>
                     </div>
@@ -243,17 +252,10 @@ export const LessonItem = memo(
                     getValueFromEvent={normFile}
                     className="mb-0 h-full w-full"
                   >
-                    <CommonFileUpload
+                    <FileUpload
                       accept={UPLOAD_CONFIG.DOCUMENT.ACCEPT}
                       maxSizeMB={UPLOAD_CONFIG.DOCUMENT.MAX_SIZE_MB}
-                      helperText={UPLOAD_CONFIG.DOCUMENT.HELPER_TEXT}
-                      listType="picture"
-                      height={150}
                       maxCount={1}
-                      icon={
-                        <FileTextOutlined className="text-2xl text-green-500" />
-                      }
-                      label="Tải lên tài liệu bổ trợ"
                       apiCall={uploadDocumentAPI}
                     />
                   </Form.Item>

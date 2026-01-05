@@ -95,30 +95,36 @@ export const COURSE_STATUS = {
     value: 1,
     label: "Mới tạo",
     color: "blue" as PresetStatusColorType,
-    nextSteps: [3],
+    nextSteps: [3] as readonly number[],
   },
   PUBLISH: {
     value: 2,
     label: "Đang phát hành",
     color: "green" as PresetStatusColorType,
-    nextSteps: [3],
+    nextSteps: [3] as readonly number[],
   },
   PENDING: {
     value: 3,
     label: "Tạm ngưng",
     color: "orange" as PresetStatusColorType,
-    nextSteps: [1, 2],
+    nextSteps: [1, 2] as readonly number[],
   },
   END: {
     value: 4,
     label: "Đã kết thúc",
     color: "red" as PresetStatusColorType,
+    nextSteps: [] as readonly number[],
   },
 } as const;
 
 export const COURSE_STATUS_LIST = Object.values(COURSE_STATUS);
 
 export const COURSE_STATUS_KEY_BY = keyBy(COURSE_STATUS_LIST, "value");
+
+export const getNextStatuses = (currentStatus: number): readonly number[] => {
+  const statusConfig = COURSE_STATUS_KEY_BY[currentStatus];
+  return statusConfig?.nextSteps || [];
+};
 
 export const COURSE_TOPIC = {
   NUTRITION: { value: 101, label: "Dinh dưỡng" },

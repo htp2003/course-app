@@ -1,12 +1,27 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Spin, Typography, FloatButton, Form } from "antd";
+import {
+  Button,
+  Spin,
+  Typography,
+  FloatButton,
+  Form,
+  Modal,
+  Radio,
+  Tag,
+  Space,
+} from "antd";
 import { ArrowLeftOutlined, EditOutlined } from "@ant-design/icons";
 
 import { getCourseDetailRealAPI } from "./services/api";
 import { StepFourContent } from "../create/components/step-four/step-four-content";
 import { mapCourseDetailToForm } from "./utils/detail-mapper";
+import { useUpdateCourseStatus } from "./hooks/use-update-course-status";
+import {
+  COURSE_STATUS_KEY_BY,
+  getNextStatuses,
+} from "../common/constants/constants";
 
 import type { ICreateCourseForm } from "../common/types/types";
 
@@ -16,6 +31,18 @@ export const CourseDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm<ICreateCourseForm>();
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<number | undefined>();
+
+  const courseId = id ? Number(id) : 0;
+
+  const handleCloseModal = () => {
+    setIsStatusModalOpen(false);
+    setSelectedStatus(undefined);
+  };
+
+  const { mutate: updateStatus, isPending: isUpdatingStatus } =
+    useUpdateCourseStatus(courseId, handleCloseModal);
 
   const {
     data: response,
@@ -23,8 +50,8 @@ export const CourseDetailPage = () => {
     isError,
     error,
   } = useQuery({
-    queryKey: ["course-detail", id],
-    queryFn: () => getCourseDetailRealAPI(id!),
+    queryKey: ["course-detail", courseId],
+    queryFn: () => getCourseDetailRealAPI(courseId),
     enabled: !!id,
     retry: false,
   });
@@ -72,13 +99,27 @@ export const CourseDetailPage = () => {
         >
           Quay lại danh sách
         </Button>
-        <Button
-          type="primary"
-          icon={<EditOutlined />}
-          onClick={() => navigate(`/course-management/create?id=${id}`)}
-        >
-          Chỉnh sửa
-        </Button>
+        <div className="flex items-center gap-4">
+          {apiData?.status && (
+            <div className="flex items-center gap-2">
+              <span className="text-gray-600">Trạng thái:</span>
+              <Tag
+                color={COURSE_STATUS_KEY_BY[apiData.status]?.color || "default"}
+              >
+                {COURSE_STATUS_KEY_BY[apiData.status]?.label || apiData.status}
+              </Tag>
+            </div>
+          )}
+          {apiData?.status && getNextStatuses(apiData.status).length > 0 && (
+            <Button
+              type="primary"
+              icon={<EditOutlined />}
+              onClick={() => setIsStatusModalOpen(true)}
+            >
+              Chỉnh sửa
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="mb-8 text-center">
@@ -93,6 +134,48 @@ export const CourseDetailPage = () => {
       </Form>
 
       <FloatButton.BackTop />
+
+      <Modal
+        title="Chuyển đổi trạng thái khóa học"
+        open={isStatusModalOpen}
+        onCancel={handleCloseModal}
+        onOk={() => {
+          if (selectedStatus !== undefined) {
+            updateStatus(selectedStatus);
+          }
+        }}
+        okText="Xác nhận"
+        cancelText="Hủy"
+        confirmLoading={isUpdatingStatus}
+        okButtonProps={{ disabled: selectedStatus === undefined }}
+        maskClosable={!isUpdatingStatus}
+        closable={!isUpdatingStatus}
+      >
+        <div className="py-4">
+          <p className="mb-4 text-gray-600">
+            Chọn trạng thái mới cho khóa học:
+          </p>
+          <Radio.Group
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="w-full"
+            disabled={isUpdatingStatus}
+          >
+            <Space direction="vertical" className="w-full">
+              {apiData?.status &&
+                getNextStatuses(apiData.status).map((statusValue: number) => {
+                  const statusConfig = COURSE_STATUS_KEY_BY[statusValue];
+                  if (!statusConfig) return null;
+                  return (
+                    <Radio key={statusValue} value={statusValue}>
+                      <Tag color={statusConfig.color}>{statusConfig.label}</Tag>
+                    </Radio>
+                  );
+                })}
+            </Space>
+          </Radio.Group>
+        </div>
+      </Modal>
     </div>
   );
 };

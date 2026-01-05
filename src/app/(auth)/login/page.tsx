@@ -1,12 +1,26 @@
-import { Button, Card, Form, Input, Typography } from "antd";
+import { Button, Card, Form, Input, Typography, Checkbox } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
+import { useEffect } from "react";
 import type { TLoginRequest } from "./types";
 import { useLoginMutation } from "./hooks/use-login-mutation";
 
 export const LoginPage = () => {
   const loginMutation = useLoginMutation();
+  const [form] = Form.useForm();
 
-  const onFinish = (values: TLoginRequest) => {
+  useEffect(() => {
+    const rememberMe = localStorage.getItem("remember_me");
+    const savedUsername = localStorage.getItem("saved_username");
+
+    if (rememberMe === "true" && savedUsername) {
+      form.setFieldsValue({
+        username: savedUsername,
+        remember: true,
+      });
+    }
+  }, [form]);
+
+  const onFinish = (values: TLoginRequest & { remember?: boolean }) => {
     loginMutation.mutate(values);
   };
 
@@ -23,6 +37,7 @@ export const LoginPage = () => {
         </div>
 
         <Form
+          form={form}
           name="login"
           initialValues={{ remember: true }}
           onFinish={onFinish}
@@ -44,7 +59,11 @@ export const LoginPage = () => {
             <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu" />
           </Form.Item>
 
-          <Form.Item>
+          <Form.Item name="remember" valuePropName="checked" noStyle>
+            <Checkbox>Ghi nhớ đăng nhập</Checkbox>
+          </Form.Item>
+
+          <Form.Item className="!mt-6">
             <Button
               type="primary"
               htmlType="submit"

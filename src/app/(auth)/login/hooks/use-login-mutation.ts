@@ -12,8 +12,9 @@ export const useLoginMutation = () => {
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: (values: TLoginRequest) => loginAPI.login(values),
-    onSuccess: (data: TLoginResponse) => {
+    mutationFn: (values: TLoginRequest & { remember?: boolean }) =>
+      loginAPI.login(values),
+    onSuccess: (data: TLoginResponse, variables) => {
       const res = data.result;
 
       if (!res || !res.accessToken) {
@@ -30,6 +31,14 @@ export const useLoginMutation = () => {
         role: res.role,
         avatar: "",
       };
+
+      if (variables.remember) {
+        localStorage.setItem("remember_me", "true");
+        localStorage.setItem("saved_username", variables.username);
+      } else {
+        localStorage.removeItem("remember_me");
+        localStorage.removeItem("saved_username");
+      }
 
       login(res.accessToken, userProfile);
       navigate("/course-management/list");

@@ -79,10 +79,9 @@ interface CustomRequestOptions {
 }
 
 interface UploadApiFunction {
-  (
-    file: File,
-    onProgress?: (percent: number) => void
-  ): Promise<{ data: IUploadResponse } | IUploadResponse>;
+  (file: File, onProgress?: (percent: number) => void): Promise<
+    { data: IUploadResponse } | IUploadResponse
+  >;
 }
 
 export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
@@ -157,6 +156,33 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
   };
 
   const beforeUpload = async (file: RcFile) => {
+    // Strict file type validation
+    if (accept) {
+      const acceptedTypes = accept.split(",").map((t) => t.trim());
+      const fileType = file.type;
+      const fileName = file.name.toLowerCase();
+
+      const isValidType = acceptedTypes.some((type) => {
+        // Handle MIME types like video/mp4
+        if (type.includes("/")) {
+          if (type.endsWith("/*")) {
+            return fileType.startsWith(type.replace("/*", "/"));
+          }
+          return fileType === type;
+        }
+        // Handle extensions like .pdf, .mp4
+        if (type.startsWith(".")) {
+          return fileName.endsWith(type.toLowerCase());
+        }
+        return false;
+      });
+
+      if (!isValidType) {
+        message.error(`Chỉ chấp nhận file: ${accept}`);
+        return Upload.LIST_IGNORE;
+      }
+    }
+
     if (internalFileList.length >= maxCount) {
       message.warning(`Tối đa ${maxCount} file!`);
       return Upload.LIST_IGNORE;
@@ -257,21 +283,29 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
         [&_.ant-upload-list-item-container]:w-full
         [&_.ant-upload]:w-full
         [&_.ant-upload]:h-full
-        ${isCoverMode
-          ? "!p-0 overflow-hidden [&_.ant-upload-btn]:!p-0 [&_.ant-upload-drag-container]:!p-0 !border-none !bg-transparent"
-          : "bg-gray-50/50 hover:bg-gray-100 transition-colors border-gray-300 [&_.ant-upload-drag-container]:flex [&_.ant-upload-drag-container]:flex-col [&_.ant-upload-drag-container]:items-center [&_.ant-upload-drag-container]:justify-center [&_.ant-upload-drag-container]:text-center [&_.ant-upload-drag-container]:h-full [&_.ant-upload-drag-container]:w-full"
+        ${
+          isCoverMode
+            ? "!p-0 overflow-hidden [&_.ant-upload-btn]:!p-0 [&_.ant-upload-drag-container]:!p-0 !border-none !bg-transparent"
+            : "bg-gray-50/50 hover:bg-gray-100 transition-colors border-gray-300 [&_.ant-upload-drag-container]:flex [&_.ant-upload-drag-container]:flex-col [&_.ant-upload-drag-container]:items-center [&_.ant-upload-drag-container]:justify-center [&_.ant-upload-drag-container]:text-center [&_.ant-upload-drag-container]:h-full [&_.ant-upload-drag-container]:w-full"
         }
       `}
-      style={{ height, padding: isCoverMode ? 0 : 10, width: width || "100%", maxWidth: width }}
+      style={{
+        height,
+        padding: isCoverMode ? 0 : 10,
+        width: width || "100%",
+        maxWidth: width,
+      }}
       disabled={uploading || disabled}
     >
       {isCoverMode ? (
         <div className="relative w-full h-full group flex items-center justify-center">
-          <img
-            src={singleImageUrl}
-            alt="preview"
-            className="w-full h-full object-cover rounded-lg"
-          />
+          {singleImageUrl && (
+            <img
+              src={singleImageUrl}
+              alt="preview"
+              className="w-full h-full object-cover rounded-lg"
+            />
+          )}
           {!uploading && !disabled && (
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-10 rounded-lg">
               <EyeOutlined
@@ -395,16 +429,18 @@ export const CommonFileUpload: React.FC<CommonFileUploadProps> = ({
       ) : (
         UploadDraggerComponent
       )}
-      <AntImage
-        width={200}
-        style={{ display: "none" }}
-        src={previewImage}
-        preview={{
-          visible: previewOpen,
-          src: previewImage,
-          onVisibleChange: (value) => setPreviewOpen(value),
-        }}
-      />
+      {previewImage && (
+        <AntImage
+          width={200}
+          style={{ display: "none" }}
+          src={previewImage}
+          preview={{
+            visible: previewOpen,
+            src: previewImage,
+            onVisibleChange: (value) => setPreviewOpen(value),
+          }}
+        />
+      )}
     </>
   );
 };

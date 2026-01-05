@@ -29,6 +29,7 @@ export interface IQuestion {
 export interface IQuiz {
   id?: string | number;
   title: string;
+  examPassRate?: number;
 
   content?: string;
   questions?: IQuestion[];
@@ -120,14 +121,24 @@ export interface IApiQuiz {
 
 export interface IApiChapter {
   id: number;
+  courseId?: number;
   title: string;
+  no?: number;
   lessons?: IApiLesson[];
+  exams?: IApiExam[];
 }
 
 export interface IApiExam {
   id: number;
   title: string;
   description?: string;
+  bannerUri?: string | null;
+  itemId?: number;
+  type?: number;
+  minCorrectAns?: number;
+  examTimeType?: number;
+  ticks?: number;
+  examPassRate?: number;
   quizzes?: IApiQuiz[];
 }
 
@@ -139,21 +150,34 @@ export interface ICourseDetailResponse {
   type: number;
   status: number;
   timeStateType: number;
-  topics: string;
-  chapters: IApiChapter[];
-  exams: IApiExam[];
   publishAt?: string;
-  startTime?: string;
-  endTime?: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  ticks?: number;
+  topics: string;
+  courseBadgeUri?: string | null;
+  courseTopics?: number[];
+  totalRegister?: number;
+  totalStudy?: number;
+  chapters: IApiChapter[];
+  exams?: IApiExam[];
+  isLearnInOrder?: boolean;
 }
 
 export interface IApiLessonFile {
   id: number;
+  type: number;
+  lessonId?: number;
+  courseId?: number;
+  mediaFileId?: number;
   mediaFile: {
     id: number;
     fileName: string;
     uri: string;
+    rawUri?: string;
     fileType: number;
+    extensions?: string;
+    content?: string;
   } | null;
 }
 
@@ -161,10 +185,14 @@ export interface IApiLesson {
   id: number;
   title: string;
   description?: string;
+  thumbnailUri?: string;
+  no?: number;
   mediaUri?: string;
   videoUrl?: string;
   quizzes?: IApiQuiz[];
   type: number;
   exams?: IApiExam[];
   lessonFiles?: IApiLessonFile[];
+  documentFiles?: IApiLessonFile[];
+  chapterId?: number;
 }

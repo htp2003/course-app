@@ -1,5 +1,16 @@
 import { memo, useCallback } from "react";
-import { Form, Input, Row, Col, Button, Tooltip, Tag, Radio } from "antd";
+import {
+  Form,
+  Input,
+  Row,
+  Col,
+  Button,
+  Tooltip,
+  Radio,
+  Popconfirm,
+  App,
+  Card,
+} from "antd";
 import {
   DeleteOutlined,
   FileTextOutlined,
@@ -73,49 +84,62 @@ interface Props {
   chapterIndex: number;
   lessonIndex: number;
   remove: (index: number | number[]) => void;
+  totalLessons: number;
+  isPreview?: boolean;
 }
 
 export const LessonItem = memo(
-  ({ chapterIndex, lessonIndex, remove }: Props) => {
-    const form = Form.useFormInstance();
+  ({
+    chapterIndex,
+    lessonIndex,
+    remove,
+    totalLessons,
+    isPreview = false,
+  }: Props) => {
+    const { message } = App.useApp();
 
     const onRemoveLesson = useCallback(() => {
+      if (totalLessons <= 1) {
+        message.warning("Không thể xóa bài học cuối cùng trong chương!");
+        return;
+      }
       remove(lessonIndex);
-    }, [remove, lessonIndex]);
+    }, [remove, lessonIndex, totalLessons, message]);
 
-    const handleTypeChange = useCallback(() => {
-      form.setFieldValue(
-        ["chapters", chapterIndex, "lessons", lessonIndex, "videoFile"],
-        undefined
-      );
-      form.setFieldValue(
-        ["chapters", chapterIndex, "lessons", lessonIndex, "docFile"],
-        undefined
-      );
-      form.setFieldValue(
-        ["chapters", chapterIndex, "lessons", lessonIndex, "slideFile"],
-        undefined
-      );
-    }, [form, chapterIndex, lessonIndex]);
+    const handleTypeChange = useCallback(() => {}, []);
 
     return (
-      <div className="group relative bg-slate-50 rounded-xl border border-slate-200 p-4 mb-4 hover:border-blue-300 hover:shadow-md transition-all duration-300">
-        <div className="absolute -left-3 -top-3 w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center font-bold text-slate-600 z-10">
-          {lessonIndex + 1}
-        </div>
-
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Tooltip title="Xóa bài học này">
-            <Button
-              danger
-              type="text"
-              icon={<DeleteOutlined />}
-              onClick={onRemoveLesson}
-              className="bg-white/80 backdrop-blur-sm border border-red-100 shadow-sm"
-            />
-          </Tooltip>
-        </div>
-
+      <Card
+        title={`Bài học ${lessonIndex + 1}`}
+        extra={
+          !isPreview && (
+            <Popconfirm
+              title="Xác nhận xóa bài học"
+              description="Bạn có chắc muốn xóa bài học này?"
+              onConfirm={onRemoveLesson}
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+              disabled={totalLessons <= 1}
+            >
+              <Tooltip
+                title={
+                  totalLessons <= 1 ? "Không thể xóa bài học cuối cùng" : ""
+                }
+              >
+                <Button
+                  danger
+                  type="text"
+                  icon={<DeleteOutlined />}
+                  className="bg-white/80 backdrop-blur-sm border border-red-100 shadow-sm "
+                  disabled={totalLessons <= 1}
+                />
+              </Tooltip>
+            </Popconfirm>
+          )
+        }
+        className="group relative bg-slate-50 rounded-xl border border-slate-200 p-4 mb-4 hover:border-blue-300 hover:shadow-md transition-all duration-300"
+      >
         <div className="mb-4 pl-2">
           <Row gutter={[16, 16]} align="middle">
             <Col span={24}>
@@ -124,27 +148,55 @@ export const LessonItem = memo(
                 colon={false}
                 labelCol={{ span: 24 }}
                 name={[lessonIndex, "title"]}
-                rules={[{ required: true, message: "Nhập tên" }]}
+                rules={
+                  isPreview
+                    ? []
+                    : [
+                        { required: true, message: "Nhập tên" },
+                        {
+                          validator: (_, value) => {
+                            if (value && !value.trim()) {
+                              return Promise.reject(
+                                new Error("Vui lòng nhập tên bài học hợp lệ")
+                              );
+                            }
+                            return Promise.resolve();
+                          },
+                        },
+                      ]
+                }
                 className="mb-0"
               >
                 <Input
                   placeholder="Nhập tên bài học..."
                   className="font-medium text-slate-700 hover:bg-white focus:bg-white bg-transparent border-t-0 border-x-0 border-b border-slate-300 rounded-none px-0 shadow-none focus:shadow-none focus:border-blue-500"
+                  disabled={isPreview}
+                  onBlur={(e) => {
+                    e.target.value = e.target.value.trim();
+                  }}
                 />
               </Form.Item>
             </Col>
 
             <Col span={24}>
               <Form.Item
-                label="Loại nội dung"
+                label="Hình thức học"
                 colon={false}
                 labelCol={{ span: 24 }}
                 name={[lessonIndex, "type"]}
                 initialValue="video"
                 className="mb-0"
-                rules={[{ required: true, message: "Chọn loại nội dung" }]}
+                rules={
+                  isPreview
+                    ? []
+                    : [{ required: true, message: "Chọn loại nội dung" }]
+                }
               >
-                <Radio.Group className="w-full" onChange={handleTypeChange}>
+                <Radio.Group
+                  className="w-full"
+                  onChange={handleTypeChange}
+                  disabled={isPreview}
+                >
                   {LESSON_TYPES.map((item) => (
                     <Radio key={item.value} value={item.value}>
                       {item.label}
@@ -186,29 +238,22 @@ export const LessonItem = memo(
 
                   return (
                     <div className="h-full flex flex-col">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Tag
-                          color="blue"
-                          className="m-0 border-0 bg-blue-50 text-blue-600 font-bold"
-                        >
-                          CHÍNH
-                        </Tag>
-                        <span className="text-xs text-slate-500 font-medium">
-                          Nội dung bài học chính
-                        </span>
-                      </div>
-
                       <div className="flex-1">
                         <Form.Item
                           name={[lessonIndex, config.field]}
                           getValueFromEvent={normFile}
                           className="mb-0 h-full"
-                          rules={[
-                            {
-                              required: true,
-                              message: "Vui lòng tải lên nội dung chính",
-                            },
-                          ]}
+                          label="Nội dung bài học chính "
+                          rules={
+                            isPreview
+                              ? []
+                              : [
+                                  {
+                                    required: true,
+                                    message: "Vui lòng tải lên nội dung chính",
+                                  },
+                                ]
+                          }
                         >
                           {type === "video" ? (
                             <ChunkFileUpload
@@ -218,6 +263,7 @@ export const LessonItem = memo(
                               apiCall={config.apiCall}
                               height={200}
                               placeholderSize={140}
+                              disabled={isPreview}
                             />
                           ) : (
                             <FileUpload
@@ -226,6 +272,7 @@ export const LessonItem = memo(
                               maxCount={config.maxCount}
                               multiple={config.maxCount > 1}
                               apiCall={config.apiCall}
+                              disabled={isPreview}
                             />
                           )}
                         </Form.Item>
@@ -238,16 +285,9 @@ export const LessonItem = memo(
 
             <Col span={24}>
               <div className="h-full flex flex-col w-full">
-                <div className="flex items-center gap-2 mb-3">
-                  <Tag className="m-0 border-0 bg-slate-100 text-slate-500 font-bold">
-                    PHỤ
-                  </Tag>
-                  <span className="text-xs text-slate-400 font-medium">
-                    Tài liệu bổ trợ (không bắt buộc)
-                  </span>
-                </div>
                 <div className="flex-1 w-full">
                   <Form.Item
+                    label="Tài liệu tham khảo (nếu có)"
                     name={[lessonIndex, "refDocFile"]}
                     getValueFromEvent={normFile}
                     className="mb-0 h-full w-full"
@@ -257,6 +297,7 @@ export const LessonItem = memo(
                       maxSizeMB={UPLOAD_CONFIG.DOCUMENT.MAX_SIZE_MB}
                       maxCount={1}
                       apiCall={uploadDocumentAPI}
+                      disabled={isPreview}
                     />
                   </Form.Item>
                 </div>
@@ -264,7 +305,7 @@ export const LessonItem = memo(
             </Col>
           </Row>
         </div>
-      </div>
+      </Card>
     );
   }
 );

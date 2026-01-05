@@ -9,9 +9,16 @@ interface Props {
   chapterIndex: number;
   lessonIndex: number;
   remove: (index: number | number[]) => void;
+  isPreview?: boolean;
 }
 export const QuizItem = memo(
-  ({ quizIndex, remove, chapterIndex, lessonIndex }: Props) => {
+  ({
+    quizIndex,
+    remove,
+    chapterIndex,
+    lessonIndex,
+    isPreview = false,
+  }: Props) => {
     const onRemoveQuiz = useCallback(() => {
       remove(quizIndex);
     }, [remove, quizIndex]);
@@ -25,22 +32,35 @@ export const QuizItem = memo(
             <Form.Item
               name={[quizIndex, "title"]}
               noStyle
-              rules={[
-                { required: true, message: "Tên bài kiểm tra là bắt buộc" },
-              ]}
+              rules={
+                isPreview
+                  ? []
+                  : [
+                      {
+                        required: true,
+                        message: "Tên bài kiểm tra là bắt buộc",
+                      },
+                    ]
+              }
             >
               <Input
                 variant="borderless"
                 className="font-semibold text-lg min-w-[300px]"
                 placeholder="Nhập tên bài kiểm tra..."
+                disabled={isPreview}
+                onBlur={(e) => {
+                  e.target.value = e.target.value.trim();
+                }}
               />
             </Form.Item>
           </Space>
         }
         extra={
-          <Button danger type="text" onClick={onRemoveQuiz}>
-            Xóa Quiz
-          </Button>
+          !isPreview && (
+            <Button danger type="text" onClick={onRemoveQuiz}>
+              Xóa Quiz
+            </Button>
+          )
         }
       >
         <Form.Item
@@ -48,15 +68,25 @@ export const QuizItem = memo(
           name={[quizIndex, "examPassRate"]}
           initialValue={70}
           className="mb-6 w-48"
-          rules={[
-            { required: true, message: "Nhập tỉ lệ đạt" },
-            {
-              pattern: /^(100|[0-9]{1,2})$/,
-              message: "Tỉ lệ phải từ 0 đến 100",
-            },
-          ]}
+          rules={
+            isPreview
+              ? []
+              : [
+                  { required: true, message: "Nhập tỉ lệ đạt" },
+                  {
+                    pattern: /^(100|[0-9]{1,2})$/,
+                    message: "Tỉ lệ phải từ 0 đến 100",
+                  },
+                ]
+          }
         >
-          <Input type="number" min={0} max={100} suffix="%" />
+          <Input
+            type="number"
+            min={0}
+            max={100}
+            suffix="%"
+            disabled={isPreview}
+          />
         </Form.Item>
 
         <Form.List name={[quizIndex, "questions"]}>
@@ -79,19 +109,23 @@ export const QuizItem = memo(
                     chapterIndex={chapterIndex}
                     lessonIndex={lessonIndex}
                     quizIndex={quizIndex}
+                    totalQuestions={qFields.length}
+                    isPreview={isPreview}
                   />
                 </div>
               ))}
-              <Button
-                size="large"
-                onClick={() =>
-                  add({ title: "", type: "choice", options: [] })
-                }
-                icon={<PlusOutlined />}
-                className="mt-2 text-blue-600 border-blue-300 hover:border-blue-500"
-              >
-                Thêm câu hỏi mới
-              </Button>
+              {!isPreview && (
+                <Button
+                  size="large"
+                  onClick={() =>
+                    add({ title: "", type: "choice", options: [] })
+                  }
+                  icon={<PlusOutlined />}
+                  className="mt-2 text-blue-600 border-blue-300 hover:border-blue-500"
+                >
+                  Thêm câu hỏi mới
+                </Button>
+              )}
             </div>
           )}
         </Form.List>

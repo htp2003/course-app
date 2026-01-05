@@ -39,6 +39,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
           <Form.Item
             label="Hình ảnh cho khoá học"
             tooltip="Hỗ trợ cắt ảnh theo tỉ lệ 16:9 tự động"
+            required
           >
             <Form.Item
               name="thumbnail"
@@ -67,14 +68,23 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
             name="title"
             label="Tên khoá học"
             rules={[{ required: true, message: "Nhập tên khóa học" }]}
+            validateTrigger="onBlur"
           >
-            <Input placeholder="Nhập tên khóa học..." disabled={isPreview} />
+            <Input
+              placeholder="Nhập tên khóa học..."
+              disabled={isPreview}
+              onBlur={(e) => {
+                const trimmed = e.target.value.trim();
+                e.target.value = trimmed;
+              }}
+            />
           </Form.Item>
 
           <Form.Item
             name="type"
             label="Loại khoá học"
             initialValue={COURSE_TYPE.OBLIGATORY.value}
+            rules={[{ required: true, message: "Chọn loại khoá học" }]}
           >
             <Radio.Group disabled={isPreview}>
               <Radio value={COURSE_TYPE.OBLIGATORY.value}>
@@ -214,7 +224,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
                         accept={UPLOAD_CONFIG.IMAGE.ACCEPT}
                         maxSizeMB={UPLOAD_CONFIG.IMAGE.MAX_SIZE_MB}
                         label="Tải ảnh huy chương"
-                        helperText="Ảnh huy chương (PNG, JPG)"
+                        helperText="Ảnh huy chương (PNG, JPG, WEBP)"
                         icon={
                           <TrophyOutlined className="text-yellow-500 text-3xl" />
                         }
@@ -250,11 +260,24 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
             rules={[
               { required: true, message: "Vui lòng nhập mô tả khóa học" },
               {
-                min: 10,
-                message: "Vui lòng nhập mô tả khóa học, ít nhất 10 ký tự",
+                validator: (_, value) => {
+                  const textOnly = (value || "")
+                    .replace(/<[^>]*>/g, " ")
+                    .replace(/&nbsp;/g, " ")
+                    .replace(/\s+/g, " ")
+                    .trim();
+                  if (!textOnly || textOnly.length < 10) {
+                    return Promise.reject(
+                      new Error(
+                        "Mô tả cần ít nhất 10 ký tự không phải khoảng trắng"
+                      )
+                    );
+                  }
+                  return Promise.resolve();
+                },
               },
             ]}
-            validateTrigger="onSubmit"
+            validateTrigger={["onBlur", "onSubmit"]}
           >
             <TiptapEditor isPreview={isPreview} />
           </Form.Item>

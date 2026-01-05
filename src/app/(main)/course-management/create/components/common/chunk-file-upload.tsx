@@ -82,6 +82,30 @@ export const ChunkFileUpload: React.FC<ChunkFileUploadProps> = ({
   }, [value, hasFile, singleFile]);
 
   const beforeUpload = (file: RcFile) => {
+    if (accept) {
+      const acceptedTypes = accept.split(",").map((t) => t.trim());
+      const fileType = file.type;
+      const fileName = file.name.toLowerCase();
+
+      const isValidType = acceptedTypes.some((type) => {
+        if (type.includes("/")) {
+          if (type.endsWith("/*")) {
+            return fileType.startsWith(type.replace("/*", "/"));
+          }
+          return fileType === type;
+        }
+        if (type.startsWith(".")) {
+          return fileName.endsWith(type.toLowerCase());
+        }
+        return false;
+      });
+
+      if (!isValidType) {
+        message.error(`Chỉ chấp nhận file: ${accept}`);
+        return Upload.LIST_IGNORE;
+      }
+    }
+
     if (maxSizeMB && file.size / 1024 / 1024 > maxSizeMB) {
       message.error(`Dung lượng tối đa ${maxSizeMB}MB`);
       return Upload.LIST_IGNORE;
@@ -215,11 +239,7 @@ export const ChunkFileUpload: React.FC<ChunkFileUploadProps> = ({
   }
 
   return (
-    <Upload
-      {...uploadProps}
-      listType={listType}
-      showUploadList={false}
-    >
+    <Upload {...uploadProps} listType={listType} showUploadList={false}>
       <button
         type="button"
         className="px-4 py-2 border border-gray-300 rounded bg-white hover:bg-gray-50 text-sm text-gray-700 transition-colors flex items-center gap-2"

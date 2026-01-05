@@ -1,5 +1,5 @@
 import { memo, useCallback } from "react";
-import { Form, Input, Button, Card, Tooltip } from "antd";
+import { Form, Input, Button, Card, Tooltip, Popconfirm, App } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { LessonItem } from "./lesson-item";
 
@@ -7,77 +7,137 @@ interface Props {
   fieldKey: number;
   fieldIndex: number;
   remove: (index: number | number[]) => void;
+  totalChapters: number;
+  isPreview?: boolean;
+  anchorPrefix?: string;
 }
 
-export const ChapterItem = memo(({ fieldIndex, remove }: Props) => {
-  const onRemoveChapter = useCallback(() => {
-    remove(fieldIndex);
-  }, [remove, fieldIndex]);
+export const ChapterItem = memo(
+  ({
+    fieldIndex,
+    remove,
+    totalChapters,
+    isPreview = false,
+    anchorPrefix = "anchor",
+  }: Props) => {
+    const { message } = App.useApp();
 
-  return (
-    <Card
-      className="shadow-sm border-indigo-100 hover:shadow-md transition-shadow duration-300"
-      styles={{ body: { padding: "16px" } }}
-    >
-      <div className="flex items-center gap-3 mb-4 p-2 bg-indigo-50/50 rounded-lg border border-indigo-100">
-        <Form.Item
-          label="Tên chương"
-          colon={false}
-          labelCol={{ span: 24 }}
-          name={[fieldIndex, "title"]}
-          rules={[{ required: true, message: "Nhập tên chương" }]}
-          className="mb-0 flex-1"
-        >
-          <Input
-            size="large"
-            placeholder="Ví dụ: Giới thiệu khóa học..."
-            className="font-medium text-gray-700 bg-white border-indigo-200 focus:border-indigo-500"
-            variant="filled"
-          />
-        </Form.Item>
+    const onRemoveChapter = useCallback(() => {
+      if (totalChapters <= 1) {
+        message.warning("Không thể xóa chương cuối cùng!");
+        return;
+      }
+      remove(fieldIndex);
+    }, [remove, fieldIndex, totalChapters, message]);
 
-        <Tooltip title="Xóa chương này">
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={onRemoveChapter}
-          />
-        </Tooltip>
-      </div>
+    return (
+      <Card
+        className="shadow-sm border-indigo-100 hover:shadow-md transition-shadow duration-300"
+        styles={{ body: { padding: "16px" } }}
+      >
+        <div className="flex items-center gap-3 mb-4 p-2 bg-indigo-50/50 rounded-lg border border-indigo-100">
+          <Form.Item
+            label="Tên chương"
+            colon={false}
+            labelCol={{ span: 24 }}
+            name={[fieldIndex, "title"]}
+            extra
+            rules={
+              isPreview
+                ? []
+                : [
+                    { required: true, message: "Nhập tên chương" },
+                    {
+                      validator: (_, value) => {
+                        if (value && !value.trim()) {
+                          return Promise.reject(
+                            new Error("Vui lòng nhập tên chương hợp lệ")
+                          );
+                        }
+                        return Promise.resolve();
+                      },
+                    },
+                  ]
+            }
+            className="mb-0 flex-1"
+          >
+            <Input
+              size="large"
+              placeholder="Ví dụ: Giới thiệu khóa học..."
+              className="font-medium text-gray-700 bg-white border-indigo-200 focus:border-indigo-500"
+              variant="filled"
+              disabled={isPreview}
+              onBlur={(e) => {
+                e.target.value = e.target.value.trim();
+              }}
+            />
+          </Form.Item>
 
-      <div className="pl-4 md:pl-10 border-l-2 border-indigo-50 space-y-3">
-        <Form.List name={[fieldIndex, "lessons"]}>
-          {(subFields, { add, remove: removeLesson }) => (
-            <>
-              {subFields.map((subField) => (
-                <div
-                  key={subField.key}
-                  id={`anchor-${fieldIndex}-${subField.name}`}
-                  className="scroll-mt-24"
-                >
-                  <LessonItem
-                    fieldKey={subField.key}
-                    chapterIndex={fieldIndex}
-                    lessonIndex={subField.name}
-                    remove={removeLesson}
-                  />
-                </div>
-              ))}
-
-              <Button
-                type="dashed"
-                onClick={() => add({ title: "", type: "video", duration: 0 })}
-                block
-                icon={<PlusOutlined />}
-                className="mt-2 text-indigo-500 border-indigo-300 border-dashed hover:text-indigo-700 hover:border-indigo-500 hover:bg-indigo-50 h-10"
+          {!isPreview && (
+            <Popconfirm
+              title="Xác nhận xóa chương"
+              description="Bạn có chắc muốn xóa chương này? Tất cả bài học trong chương sẽ bị xóa."
+              onConfirm={onRemoveChapter}
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+              disabled={totalChapters <= 1}
+            >
+              <Tooltip
+                title={
+                  totalChapters <= 1 ? "Không thể xóa chương cuối cùng" : ""
+                }
               >
-                Thêm bài học mới
-              </Button>
-            </>
+                <Button
+                  type="text"
+                  danger
+                  icon={<DeleteOutlined />}
+                  disabled={totalChapters <= 1}
+                />
+              </Tooltip>
+            </Popconfirm>
           )}
-        </Form.List>
-      </div>
-    </Card>
-  );
-});
+        </div>
+
+        <div className="pl-4 md:pl-10 border-l-2 border-indigo-50 space-y-3">
+          <Form.List name={[fieldIndex, "lessons"]}>
+            {(subFields, { add, remove: removeLesson }) => (
+              <>
+                {subFields.map((subField) => (
+                  <div
+                    key={subField.key}
+                    id={`${anchorPrefix}-${fieldIndex}-${subField.name}`}
+                    className="scroll-mt-24"
+                  >
+                    <LessonItem
+                      fieldKey={subField.key}
+                      chapterIndex={fieldIndex}
+                      lessonIndex={subField.name}
+                      remove={removeLesson}
+                      totalLessons={subFields.length}
+                      isPreview={isPreview}
+                    />
+                  </div>
+                ))}
+
+                {!isPreview && (
+                  <Button
+                    type="dashed"
+                    onClick={() =>
+                      add({ title: "", type: "video", duration: 0 })
+                    }
+                    block
+                    icon={<PlusOutlined />}
+                    className="mt-2 text-indigo-500 border-indigo-300 border-dashed hover:text-indigo-700 hover:border-indigo-500 hover:bg-indigo-50 h-10"
+                  >
+                    Thêm bài học mới
+                  </Button>
+                )}
+              </>
+            )}
+          </Form.List>
+        </div>
+      </Card>
+    );
+  }
+);

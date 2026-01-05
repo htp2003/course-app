@@ -1,4 +1,4 @@
-import { Button, Table, Tag, Typography, Tooltip, Avatar } from "antd";
+import { Button, Table, Tag, Typography, Tooltip, Avatar, Spin } from "antd";
 import type { TableProps, TablePaginationConfig } from "antd";
 import {
   PlusOutlined,
@@ -6,6 +6,7 @@ import {
   CalendarOutlined,
   SafetyCertificateOutlined,
   UserOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -26,7 +27,7 @@ export const CourseList = () => {
   const navigate = useNavigate();
   const { params, setParams } = useCourseParams();
 
-  const { data, isLoading } = useQuery({
+  const { data, isFetching } = useQuery({
     queryKey: ["courses", params],
     queryFn: () => courseListAPI.getCourses(params),
     placeholderData: (prev) => prev,
@@ -174,27 +175,47 @@ export const CourseList = () => {
       render: renderTopicColumn,
     },
     {
-      title: "Thời gian",
-      key: "time",
-      width: 200,
-      render: (_, record: TCourseRecord) => (
-        <div className="flex flex-col text-xs text-gray-500">
-          <div className="flex items-center gap-1 mb-1">
-            <CalendarOutlined />
-            <span>
-              {record.startTime
-                ? `Bắt đầu: ${formatDate(record.startTime, false)}`
-                : `Ngày đăng: ${formatDate(record.publishAt, false)}`}
-            </span>
-          </div>
-          {record.endTime && (
-            <div className="flex items-center gap-1 text-gray-400">
-              <SafetyCertificateOutlined />
-              <span>Kết thúc: {formatDate(record.endTime, false)}</span>
-            </div>
-          )}
+      title: "Ngày phát hành",
+      dataIndex: "publishAt",
+      key: "publishAt",
+      width: 130,
+      render: (publishAt: string) => (
+        <div className="flex items-center gap-1 text-xs text-gray-600">
+          <CalendarOutlined />
+          <span>{formatDate(publishAt, false)}</span>
         </div>
       ),
+    },
+    {
+      title: "Thời gian diễn ra",
+      key: "time",
+      width: 200,
+      render: (_, record: TCourseRecord) => {
+        if (!record.startTime && !record.endTime) {
+          return (
+            <div className="flex items-center gap-1 text-xs text-green-600">
+              <SafetyCertificateOutlined />
+              <span className="font-medium">Vĩnh viễn</span>
+            </div>
+          );
+        }
+        return (
+          <div className="flex flex-col text-xs text-gray-500">
+            {record.startTime && (
+              <div className="flex items-center gap-1 mb-1">
+                <CalendarOutlined />
+                <span>Bắt đầu: {formatDate(record.startTime, false)}</span>
+              </div>
+            )}
+            {record.endTime && (
+              <div className="flex items-center gap-1 text-gray-400">
+                <SafetyCertificateOutlined />
+                <span>Kết thúc: {formatDate(record.endTime, false)}</span>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: "Trạng thái",
@@ -236,7 +257,7 @@ export const CourseList = () => {
       <CourseFilter
         initialValues={params}
         onFilter={handleFilter}
-        loading={isLoading}
+        loading={isFetching}
       />
 
       <div className="flex justify-between items-end">
@@ -254,23 +275,32 @@ export const CourseList = () => {
       </div>
 
       <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-        <Table
-          columns={columns}
-          dataSource={courseData}
-          loading={isLoading}
-          rowKey="id"
-          pagination={{
-            current: params.Page,
-            pageSize: params.PageSize,
-            total: totalRecords,
-            showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "50"],
-            showTotal: (total) => `Tổng ${total} khóa học`,
-          }}
-          onChange={handleTableChange}
-          scroll={{ x: 1200 }}
-          size="small"
-        />
+        <Spin
+          spinning={isFetching}
+          indicator={<LoadingOutlined style={{ fontSize: 32 }} spin />}
+          tip="Đang tải dữ liệu..."
+        >
+          <Table
+            columns={columns}
+            dataSource={courseData}
+            loading={false}
+            rowKey="id"
+            pagination={{
+              current: params.Page,
+              pageSize: params.PageSize,
+              total: totalRecords,
+              showSizeChanger: true,
+              pageSizeOptions: ["10", "20", "50"],
+              showTotal: (total) => `Tổng ${total} khóa học`,
+            }}
+            onChange={handleTableChange}
+            scroll={{ x: 1200 }}
+            size="small"
+            locale={{
+              emptyText: "Không có dữ liệu",
+            }}
+          />
+        </Spin>
       </div>
     </div>
   );

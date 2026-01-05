@@ -1,5 +1,7 @@
-import { Steps, Button, Card, Form, Grid } from "antd";
+import { Steps, Button, Card, Form, Grid, Alert, Spin } from "antd";
 import { useCourseForm } from "../hooks/use-course-form";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
   InfoCircleOutlined,
   FileTextOutlined,
@@ -10,13 +12,30 @@ import {
   CheckOutlined,
 } from "@ant-design/icons";
 import { CourseInfoSection } from "./step-one/course-info-section";
-import { StepTwoContent } from "./step-two/step-two-content";
-import { StepThreeContent } from "./step-three/step-three-content";
-import { StepFourContent } from "./step-four/step-four-content";
+import { lazy, Suspense } from "react";
+
+const StepTwoContent = lazy(() =>
+  import("./step-two/step-two-content").then((module) => ({
+    default: module.StepTwoContent,
+  }))
+);
+
+const StepThreeContent = lazy(() =>
+  import("./step-three/step-three-content").then((module) => ({
+    default: module.StepThreeContent,
+  }))
+);
+
+const StepFourContent = lazy(() =>
+  import("./step-four/step-four-content").then((module) => ({
+    default: module.StepFourContent,
+  }))
+);
 
 const { useBreakpoint } = Grid;
 
 export const CourseWizard = () => {
+  const location = useLocation();
   const {
     currentStep,
     maxStep,
@@ -26,7 +45,32 @@ export const CourseWizard = () => {
     onSubmit,
     goTo,
     isSubmitting,
+    hasValidationError,
+    setHasValidationError,
+    handleFieldsChange,
+    isFormDirty,
   } = useCourseForm();
+
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (isFormDirty && !isSubmitting) {
+        e.preventDefault();
+        const confirmed = window.confirm(
+          "Bạn có thay đổi chưa lưu. Bạn có chắc muốn rời khỏi trang?"
+        );
+        if (!confirmed) {
+          window.history.pushState(null, "", location.pathname);
+        }
+      }
+    };
+
+    window.history.pushState(null, "", location.pathname);
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [isFormDirty, isSubmitting, location.pathname]);
 
   const screens = useBreakpoint();
   const steps = [
@@ -36,9 +80,15 @@ export const CourseWizard = () => {
     { title: "Xem trước", icon: <EyeOutlined /> },
   ];
 
+  const StepFallback = ({ label }: { label: string }) => (
+    <div className="flex justify-center items-center h-[420px]">
+      <Spin tip={`Đang tải ${label.toLowerCase()}...`} />
+    </div>
+  );
+
   return (
     <div className="max-w-6xl mx-auto pb-24">
-      <Card className="mb-6 shadow-sm sticky top-4 z-40">
+      <Card className="mb-6 shadow-sm top-4 ">
         <Steps
           current={currentStep}
           onChange={goTo}
@@ -61,7 +111,23 @@ export const CourseWizard = () => {
         initialValues={{
           chapters: [],
         }}
+        onFieldsChange={() => {
+          handleFieldsChange();
+          const hasError = form
+            .getFieldsError()
+            .some(({ errors }) => errors.length > 0);
+          setHasValidationError(hasError);
+        }}
       >
+        {hasValidationError && (
+          <div className="mb-4">
+            <Alert
+              type="error"
+              showIcon
+              message="Bạn còn trường bắt buộc chưa điền. Vui lòng kiểm tra lại."
+            />
+          </div>
+        )}
         <div className="min-h-[500px]">
           <div
             style={{ display: currentStep === 0 ? "block" : "none" }}
@@ -70,24 +136,30 @@ export const CourseWizard = () => {
             <CourseInfoSection />
           </div>
 
-          <div
-            style={{ display: currentStep === 1 ? "block" : "none" }}
-            className="animate-fade-in"
-          >
-            <StepTwoContent />
-          </div>
+          <Suspense fallback={<StepFallback label="Nội dung & bài học" />}>
+            <div
+              style={{ display: currentStep === 1 ? "block" : "none" }}
+              className="animate-fade-in"
+            >
+              <StepTwoContent />
+            </div>
+          </Suspense>
 
-          <div
-            style={{ display: currentStep === 2 ? "block" : "none" }}
-            className="animate-fade-in"
-          >
-            <StepThreeContent />
-          </div>
+          <Suspense fallback={<StepFallback label="Bài kiểm tra" />}>
+            <div
+              style={{ display: currentStep === 2 ? "block" : "none" }}
+              className="animate-fade-in"
+            >
+              <StepThreeContent />
+            </div>
+          </Suspense>
 
           {currentStep === 3 && (
-            <div className="animate-fade-in">
-              <StepFourContent />
-            </div>
+            <Suspense fallback={<StepFallback label="Xem trước" />}>
+              <div className="animate-fade-in">
+                <StepFourContent />
+              </div>
+            </Suspense>
           )}
         </div>
       </Form>
@@ -127,6 +199,7 @@ export const CourseWizard = () => {
               className="bg-green-600 hover:bg-green-500 border-green-600 rounded-xl shadow-green-200 shadow-lg font-bold w-full md:w-auto px-3 md:px-6"
               onClick={onSubmit}
               loading={isSubmitting}
+              disabled={isSubmitting}
             >
               <span className="hidden md:inline">Hoàn tất khóa học</span>
             </Button>

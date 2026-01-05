@@ -1,11 +1,20 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { ConfigProvider, App as AntdApp } from "antd";
+import { ConfigProvider, App as AntdApp, Spin } from "antd";
 import { MainLayout } from "./components/layouts/main-layout";
-import CreateCoursePage from "./app/(main)/course-management/create";
-import CourseListPage from "./app/(main)/course-management/list";
-import { CourseDetailPage } from "./app/(main)/course-management/detail/page";
 import { ProtectedRoute } from "./components/auth/protected-route";
 import { LoginPage } from "./app/(auth)/login/page";
+
+import CourseListPage from "./app/(main)/course-management/list";
+
+const CreateCoursePage = lazy(
+  () => import("./app/(main)/course-management/create")
+);
+const CourseDetailPage = lazy(() =>
+  import("./app/(main)/course-management/detail/page").then((module) => ({
+    default: module.CourseDetailPage,
+  }))
+);
 
 function App() {
   return (
@@ -48,7 +57,17 @@ function App() {
 
               <Route
                 path="/course-management/create"
-                element={<CreateCoursePage />}
+                element={
+                  <Suspense
+                    fallback={
+                      <div className="flex justify-center items-center h-screen">
+                        <Spin size="large" />
+                      </div>
+                    }
+                  >
+                    <CreateCoursePage />
+                  </Suspense>
+                }
               />
               <Route
                 path="/course-management/list"
@@ -56,7 +75,17 @@ function App() {
               />
               <Route
                 path="/course-management/detail/:id"
-                element={<CourseDetailPage />}
+                element={
+                  <Suspense
+                    fallback={
+                      <div className="flex justify-center items-center h-screen">
+                        <Spin size="large" />
+                      </div>
+                    }
+                  >
+                    <CourseDetailPage />
+                  </Suspense>
+                }
               />
             </Route>
           </Route>

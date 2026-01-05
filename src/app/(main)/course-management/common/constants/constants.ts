@@ -66,7 +66,7 @@ export const UPLOAD_CONFIG = {
   VIDEO: {
     MAX_SIZE_MB: 500,
     ACCEPT:
-      "video/mp4, video/mov, video/avi, video/mkv, video/quicktime, video/webm",
+      "video/mp4, video/mov, video/avi, video/mkv, video/quicktime, video/webm, .mp4, .mov, .avi, .mkv, .webm",
     HELPER_TEXT: "Hỗ trợ: MP4, MOV, AVI, MKV, WEBM (Max 500MB)",
   },
 } as const;

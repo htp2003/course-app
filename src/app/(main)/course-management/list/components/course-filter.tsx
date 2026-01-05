@@ -5,6 +5,7 @@ import {
   FilterOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { useEffect } from "react";
 import {
   COURSE_STATUS_LIST,
   COURSE_TYPE_LIST,
@@ -41,10 +42,25 @@ export const CourseFilter = ({ initialValues, onFilter, loading }: Props) => {
         : undefined,
   };
 
+  useEffect(() => {
+    form.setFieldsValue(defaultValues);
+  }, [
+    initialValues.Title,
+    initialValues.Status,
+    initialValues.Type,
+    JSON.stringify(initialValues.Topics),
+    initialValues.StartTime,
+    initialValues.EndTime,
+  ]);
+
   const handleFinish = (values: TFilterValues) => {
     const { dateRange, ...rest } = values;
+
+    const trimmedTitle = rest.Title?.trim();
+
     const apiParams: Partial<TGetCoursesParams> = {
       ...rest,
+      Title: trimmedTitle || undefined,
       StartTime: dateRange ? dateRange[0].format("YYYY-MM-DD") : undefined,
       EndTime: dateRange ? dateRange[1].format("YYYY-MM-DD") : undefined,
     };
@@ -101,8 +117,15 @@ export const CourseFilter = ({ initialValues, onFilter, loading }: Props) => {
                 mode="multiple"
                 placeholder="Chọn chủ đề"
                 allowClear
+                showSearch
                 maxTagCount="responsive"
                 options={COURSE_CATEGORIES}
+                notFoundContent="Không tìm thấy chủ đề"
+                filterOption={(input, option) =>
+                  (option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
               />
             </Form.Item>
           </Col>
@@ -138,14 +161,10 @@ export const CourseFilter = ({ initialValues, onFilter, loading }: Props) => {
               />
             </Form.Item>
           </Col>
+        </Row>
 
-          <Col
-            xs={24}
-            sm={12}
-            md={16}
-            lg={18}
-            className="flex justify-end items-end pb-6"
-          >
+        <Row className="mt-[-10px] mb-4">
+          <Col span={24} className="flex justify-end">
             <div className="flex gap-2">
               <Button icon={<ReloadOutlined />} onClick={handleReset}>
                 Làm mới

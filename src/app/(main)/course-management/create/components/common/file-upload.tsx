@@ -50,6 +50,30 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   const internalFileList = value || [];
 
   const beforeUpload = (file: RcFile) => {
+    if (accept) {
+      const acceptedTypes = accept.split(",").map((t) => t.trim());
+      const fileType = file.type;
+      const fileName = file.name.toLowerCase();
+
+      const isValidType = acceptedTypes.some((type) => {
+        if (type.includes("/")) {
+          if (type.endsWith("/*")) {
+            return fileType.startsWith(type.replace("/*", "/"));
+          }
+          return fileType === type;
+        }
+        if (type.startsWith(".")) {
+          return fileName.endsWith(type.toLowerCase());
+        }
+        return false;
+      });
+
+      if (!isValidType) {
+        message.error(`Chỉ chấp nhận file: ${accept}`);
+        return Upload.LIST_IGNORE;
+      }
+    }
+
     if (maxSizeMB && file.size / 1024 / 1024 > maxSizeMB) {
       message.error(`Dung lượng tối đa ${maxSizeMB}MB`);
       return Upload.LIST_IGNORE;

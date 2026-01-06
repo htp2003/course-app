@@ -16,6 +16,7 @@ import {
   FileTextOutlined,
   VideoCameraOutlined,
   DesktopOutlined,
+  DownloadOutlined,
 } from "@ant-design/icons";
 import { LESSON_TYPES } from "../../../common/constants/constants";
 import {
@@ -236,6 +237,97 @@ export const LessonItem = memo(
                   const config = getUploadConfig(type);
                   if (!config) return null;
 
+                  if (isPreview && type === "video") {
+                    const videoFile = getFieldValue([
+                      "chapters",
+                      chapterIndex,
+                      "lessons",
+                      lessonIndex,
+                      "videoFile",
+                    ]);
+
+                    const videoUrl =
+                      Array.isArray(videoFile) && videoFile.length > 0
+                        ? videoFile[0].url
+                        : null;
+
+                    if (videoUrl) {
+                      return (
+                        <div className="h-full flex flex-col">
+                          <div className="flex-1">
+                            <div className="mb-2 font-medium text-gray-700 flex items-center gap-2">
+                              <VideoCameraOutlined className="text-red-500" />
+                              Video bài giảng
+                            </div>
+                            <div
+                              className="relative w-full"
+                              style={{ paddingBottom: "56.25%" }}
+                            >
+                              <video
+                                controls
+                                className="absolute top-0 left-0 w-full h-full rounded-lg border border-gray-200 bg-black"
+                                src={videoUrl}
+                              >
+                                Trình duyệt của bạn không hỗ trợ video.
+                              </video>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                  }
+
+                  if (isPreview && (type === "document" || type === "slide")) {
+                    const fileField =
+                      type === "document" ? "docFile" : "slideFile";
+                    const fileList = getFieldValue([
+                      "chapters",
+                      chapterIndex,
+                      "lessons",
+                      lessonIndex,
+                      fileField,
+                    ]);
+
+                    const file =
+                      Array.isArray(fileList) && fileList.length > 0
+                        ? fileList[0]
+                        : null;
+
+                    if (file) {
+                      return (
+                        <div className="h-full flex flex-col">
+                          <div className="flex-1">
+                            <div className="mb-2 font-medium text-gray-700 flex items-center gap-2">
+                              {config.icon}
+                              {config.label}
+                            </div>
+                            <a
+                              href={file.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-3 p-4 bg-blue-50 border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:shadow-md transition-all group"
+                            >
+                              <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-md flex items-center justify-center group-hover:bg-blue-200 transition-colors shrink-0">
+                                <FileTextOutlined
+                                  style={{ fontSize: "24px" }}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-semibold text-gray-800 truncate group-hover:text-blue-600">
+                                  {file.name || "Tài liệu"}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Nhấn để xem hoặc tải về
+                                </div>
+                              </div>
+                              <DownloadOutlined className="text-gray-400 group-hover:text-blue-500 text-xl" />
+                            </a>
+                          </div>
+                        </div>
+                      );
+                    }
+                  }
+
                   return (
                     <div className="h-full flex flex-col">
                       <div className="flex-1">
@@ -287,18 +379,82 @@ export const LessonItem = memo(
               <div className="h-full flex flex-col w-full">
                 <div className="flex-1 w-full">
                   <Form.Item
-                    label="Tài liệu tham khảo (nếu có)"
-                    name={[lessonIndex, "refDocFile"]}
-                    getValueFromEvent={normFile}
-                    className="mb-0 h-full w-full"
+                    noStyle
+                    shouldUpdate={(prev, curr) => {
+                      return (
+                        prev.chapters?.[chapterIndex]?.lessons?.[lessonIndex]
+                          ?.refDocFile !==
+                        curr.chapters?.[chapterIndex]?.lessons?.[lessonIndex]
+                          ?.refDocFile
+                      );
+                    }}
                   >
-                    <FileUpload
-                      accept={UPLOAD_CONFIG.DOCUMENT.ACCEPT}
-                      maxSizeMB={UPLOAD_CONFIG.DOCUMENT.MAX_SIZE_MB}
-                      maxCount={1}
-                      apiCall={uploadDocumentAPI}
-                      disabled={isPreview}
-                    />
+                    {({ getFieldValue }) => {
+                      const refDocFile = getFieldValue([
+                        "chapters",
+                        chapterIndex,
+                        "lessons",
+                        lessonIndex,
+                        "refDocFile",
+                      ]);
+
+                      const hasRefDoc =
+                        Array.isArray(refDocFile) && refDocFile.length > 0;
+
+                      if (isPreview && hasRefDoc) {
+                        return (
+                          <div>
+                            <div className="mb-2 font-medium text-gray-700 flex items-center gap-2">
+                              <FileTextOutlined className="text-green-500" />
+                              Tài liệu tham khảo
+                            </div>
+                            <div className="space-y-2">
+                              {refDocFile.map((file: any, idx: number) => (
+                                <a
+                                  key={idx}
+                                  href={file.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg hover:border-green-400 hover:shadow-sm transition-all group"
+                                >
+                                  <div className="w-10 h-10 bg-green-100 text-green-600 rounded-md flex items-center justify-center group-hover:bg-green-200 transition-colors shrink-0">
+                                    <FileTextOutlined
+                                      style={{ fontSize: "20px" }}
+                                    />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-gray-700 truncate group-hover:text-green-600">
+                                      {file.name || "Tài liệu tham khảo"}
+                                    </div>
+                                    <div className="text-xs text-gray-500 mt-0.5">
+                                      Nhấn để xem hoặc tải về
+                                    </div>
+                                  </div>
+                                  <DownloadOutlined className="text-gray-400 group-hover:text-green-500" />
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <Form.Item
+                          label="Tài liệu tham khảo (nếu có)"
+                          name={[lessonIndex, "refDocFile"]}
+                          getValueFromEvent={normFile}
+                          className="mb-0 h-full w-full"
+                        >
+                          <FileUpload
+                            accept={UPLOAD_CONFIG.DOCUMENT.ACCEPT}
+                            maxSizeMB={UPLOAD_CONFIG.DOCUMENT.MAX_SIZE_MB}
+                            maxCount={1}
+                            apiCall={uploadDocumentAPI}
+                            disabled={isPreview}
+                          />
+                        </Form.Item>
+                      );
+                    }}
                   </Form.Item>
                 </div>
               </div>

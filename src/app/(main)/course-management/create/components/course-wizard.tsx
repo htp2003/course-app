@@ -111,6 +111,7 @@ export const CourseWizard = () => {
         initialValues={{
           chapters: [],
         }}
+        validateTrigger={false}
         onFieldsChange={() => {
           handleFieldsChange();
           const hasError = form

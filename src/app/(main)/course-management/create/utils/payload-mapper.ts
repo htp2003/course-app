@@ -22,7 +22,16 @@ interface IUploadResponse {
     id?: number;
     url?: string;
   };
+  // Direct fields (for video uploads)
+  mediaFileId?: number;
   id?: number;
+  rawUrl?: string;
+  compressUrl?: string;
+  url?: string;
+  uri?: string;
+  key?: string;
+  fileName?: string;
+  fileType?: number;
 }
 
 const getFileId = (fileList?: UploadFile[]): number => {
@@ -31,6 +40,9 @@ const getFileId = (fileList?: UploadFile[]): number => {
   const response = file.response as IUploadResponse | undefined;
   if (!response) return 0;
 
+  // Check direct mediaFileId first (for video uploads)
+  if (response.mediaFileId) return response.mediaFileId;
+  // Then check nested in result
   if (response.result?.mediaFileId) return response.result.mediaFileId;
   if (response.result?.id) return response.result.id;
   if (response.data?.id) return response.data.id;
@@ -44,6 +56,11 @@ const getOriginalUrl = (fileList?: UploadFile[]): string => {
   const response = file.response as IUploadResponse | undefined;
   if (!response) return "";
 
+  // Check direct URLs first (for video uploads)
+  if (response.rawUrl) return response.rawUrl;
+  if (response.compressUrl) return response.compressUrl;
+  if (response.url) return response.url;
+  // Then check nested in result
   if (response.result?.rawUrl) return response.result.rawUrl;
   if (response.result?.url) return response.result.url;
   if (response.result?.uri) return response.result.uri;
@@ -123,6 +140,8 @@ export const mapUiToApiPayload = (values: ICreateCourseForm) => {
       const refFiles = less.refDocFile || [];
       const documentMediaFileId = getFileId(refFiles);
       const docRawUrl = getUrlWithExtension(refFiles);
+
+    
 
       if (less.quizzes && less.quizzes.length > 0) {
         less.quizzes.forEach((uiQuiz) => {

@@ -32,8 +32,6 @@ interface Props {
 }
 
 export const CourseInfoSection = ({ isPreview = false }: Props) => {
-  const form = Form.useFormInstance();
-
   return (
     <Card title="Thông tin cơ bản" className="shadow-sm mb-6 rounded-lg">
       <Row gutter={[32, 24]}>
@@ -48,6 +46,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
               getValueFromEvent={normFile}
               noStyle
               rules={[{ required: true, message: "Vui lòng chọn ảnh bìa" }]}
+              validateTrigger="onChange"
             >
               <ImageUpload
                 accept={UPLOAD_CONFIG.IMAGE.ACCEPT}
@@ -101,6 +100,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
             label="Loại khoá học"
             {...(!isPreview && { initialValue: COURSE_TYPE.OBLIGATORY.value })}
             rules={[{ required: true, message: "Chọn loại khoá học" }]}
+            validateTrigger="onChange"
           >
             <Radio.Group disabled={isPreview}>
               <Radio value={COURSE_TYPE.OBLIGATORY.value}>
@@ -123,6 +123,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
                 message: "Chọn ít nhất 1 chủ đề",
               },
             ]}
+            validateTrigger="onBlur"
           >
             <Select
               mode="multiple"
@@ -167,6 +168,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
               }),
             ]}
             dependencies={["timeRange", "timeStateType"]}
+            validateTrigger="onChange"
           >
             <DatePicker
               showTime
@@ -175,11 +177,6 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
               className="w-full"
               disabledDate={disablePastDates}
               disabled={isPreview}
-              onChange={() => {
-                setTimeout(() => {
-                  form?.validateFields(["timeRange"]);
-                }, 0);
-              }}
             />
           </Form.Item>
 
@@ -243,6 +240,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
                         },
                       },
                     ]}
+                    validateTrigger="onChange"
                   >
                     <RangePicker
                       showTime
@@ -298,6 +296,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
                         },
                       ]}
                       noStyle
+                      validateTrigger="onChange"
                     >
                       <ImageUpload
                         accept={UPLOAD_CONFIG.IMAGE.ACCEPT}
@@ -324,6 +323,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
             label="Học theo thứ tự"
             {...(!isPreview && { initialValue: LEARN_ORDER.YES.value })}
             rules={[{ required: true, message: "Chọn hình thức học" }]}
+            validateTrigger="onChange"
           >
             <Radio.Group disabled={isPreview}>
               <Radio value={LEARN_ORDER.YES.value}>
@@ -356,14 +356,9 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
                 },
               },
             ]}
-            validateTrigger={["onChange", "onBlur"]}
+            validateTrigger="onBlur"
           >
-            <TiptapEditor
-              isPreview={isPreview}
-              onBlur={() => {
-                form.validateFields(["description"]);
-              }}
-            />
+            <TiptapEditor isPreview={isPreview} />
           </Form.Item>
         </Col>
       </Row>

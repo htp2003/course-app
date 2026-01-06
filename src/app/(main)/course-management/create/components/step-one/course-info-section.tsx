@@ -356,7 +356,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
                 },
               },
             ]}
-            validateTrigger="onBlur"
+            validateTrigger="onChange"
           >
             <TiptapEditor isPreview={isPreview} />
           </Form.Item>

@@ -986,11 +986,8 @@ export const useCourseForm = () => {
     const autosave = () => saveSnapshot(currentStep);
 
     const intervalId = window.setInterval(autosave, AUTOSAVE_INTERVAL_MS);
-    window.addEventListener("beforeunload", autosave);
-
     return () => {
       window.clearInterval(intervalId);
-      window.removeEventListener("beforeunload", autosave);
     };
   }, [currentStep]);
 

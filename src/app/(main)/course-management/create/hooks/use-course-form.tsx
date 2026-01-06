@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Form, App, notification } from "antd";
+import { Form, App } from "antd";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -21,6 +21,11 @@ import type {
 } from "../../common/types/types";
 
 import { mapUiToApiPayload } from "../utils/payload-mapper";
+import {
+  normalizeEssayQuestions,
+  serializeFile,
+  deserializeFile,
+} from "../utils/form-normalizers";
 
 interface ICourseApiPayload {
   id?: string;
@@ -79,52 +84,6 @@ const AUTOSAVE_INTERVAL_MS = 2 * 60 * 1000;
 const PASS_RATE_MIN = 0;
 const PASS_RATE_MAX = 100;
 
-type FileWithResponse = UploadFile & {
-  response?: {
-    result?: {
-      rawUrl?: string;
-      compressUrl?: string;
-      url?: string;
-    };
-    data?: {
-      rawUrl?: string;
-      url?: string;
-    };
-  };
-};
-
-const getUrlFromFile = (file: FileWithResponse): string | undefined => {
-  if (file.url) return file.url;
-  const resp = file.response;
-  if (!resp) return undefined;
-  return (
-    resp.result?.rawUrl ||
-    resp.result?.compressUrl ||
-    resp.result?.url ||
-    resp.data?.rawUrl ||
-    resp.data?.url
-  );
-};
-
-const serializeFile = (file: UploadFile): UploadFile => {
-  const fileWithResp = file as FileWithResponse;
-  const url = getUrlFromFile(fileWithResp);
-  return {
-    uid: file.uid ?? "",
-    name: file.name ?? "",
-    status: file.status,
-    url,
-    response: fileWithResp.response,
-  } as UploadFile;
-};
-
-const deserializeFile = (file: UploadFile): UploadFile => {
-  const fileWithResp = file as FileWithResponse;
-  if (fileWithResp.url) return fileWithResp;
-  const url = getUrlFromFile(fileWithResp);
-  return url ? ({ ...fileWithResp, url } as UploadFile) : fileWithResp;
-};
-
 export const useCourseForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [maxStep, setMaxStep] = useState(0);
@@ -176,11 +135,15 @@ export const useCourseForm = () => {
           publishAt: data.publishAt ? dayjs(data.publishAt) : data.publishAt,
           thumbnail:
             data.thumbnail && Array.isArray(data.thumbnail)
-              ? data.thumbnail.map(deserializeFile)
+              ? data.thumbnail
+                  .map(deserializeFile)
+                  .filter((f: UploadFile | null): f is UploadFile => f !== null)
               : data.thumbnail,
           courseBadgeFile:
             data.courseBadgeFile && Array.isArray(data.courseBadgeFile)
-              ? data.courseBadgeFile.map(deserializeFile)
+              ? data.courseBadgeFile
+                  .map(deserializeFile)
+                  .filter((f: UploadFile | null): f is UploadFile => f !== null)
               : data.courseBadgeFile,
           chapters:
             data.chapters && Array.isArray(data.chapters)
@@ -192,20 +155,40 @@ export const useCourseForm = () => {
                           ...lesson,
                           docFile:
                             lesson.docFile && Array.isArray(lesson.docFile)
-                              ? lesson.docFile.map(deserializeFile)
+                              ? lesson.docFile
+                                  .map(deserializeFile)
+                                  .filter(
+                                    (f: UploadFile | null): f is UploadFile =>
+                                      f !== null
+                                  )
                               : lesson.docFile,
                           slideFile:
                             lesson.slideFile && Array.isArray(lesson.slideFile)
-                              ? lesson.slideFile.map(deserializeFile)
+                              ? lesson.slideFile
+                                  .map(deserializeFile)
+                                  .filter(
+                                    (f: UploadFile | null): f is UploadFile =>
+                                      f !== null
+                                  )
                               : lesson.slideFile,
                           videoFile:
                             lesson.videoFile && Array.isArray(lesson.videoFile)
-                              ? lesson.videoFile.map(deserializeFile)
+                              ? lesson.videoFile
+                                  .map(deserializeFile)
+                                  .filter(
+                                    (f: UploadFile | null): f is UploadFile =>
+                                      f !== null
+                                  )
                               : lesson.videoFile,
                           refDocFile:
                             lesson.refDocFile &&
                             Array.isArray(lesson.refDocFile)
-                              ? lesson.refDocFile.map(deserializeFile)
+                              ? lesson.refDocFile
+                                  .map(deserializeFile)
+                                  .filter(
+                                    (f: UploadFile | null): f is UploadFile =>
+                                      f !== null
+                                  )
                               : lesson.refDocFile,
                         }))
                       : chapter.lessons,
@@ -225,14 +208,24 @@ export const useCourseForm = () => {
   const saveSnapshot = (targetStep: number) => {
     const allData = form.getFieldsValue(true);
 
-    const safeData: ICreateCourseForm = { ...allData } as ICreateCourseForm;
+    const normalizedData = normalizeEssayQuestions(
+      allData as ICreateCourseForm
+    );
+
+    const safeData: ICreateCourseForm = {
+      ...normalizedData,
+    } as ICreateCourseForm;
 
     if (safeData.thumbnail && Array.isArray(safeData.thumbnail)) {
-      safeData.thumbnail = safeData.thumbnail.map(serializeFile);
+      safeData.thumbnail = safeData.thumbnail
+        .map(serializeFile)
+        .filter((f: UploadFile | null): f is UploadFile => f !== null);
     }
 
     if (safeData.courseBadgeFile && Array.isArray(safeData.courseBadgeFile)) {
-      safeData.courseBadgeFile = safeData.courseBadgeFile.map(serializeFile);
+      safeData.courseBadgeFile = safeData.courseBadgeFile
+        .map(serializeFile)
+        .filter((f: UploadFile | null): f is UploadFile => f !== null);
     }
 
     if (safeData.chapters && Array.isArray(safeData.chapters)) {
@@ -245,29 +238,33 @@ export const useCourseForm = () => {
               serializedLesson.docFile &&
               Array.isArray(serializedLesson.docFile)
             ) {
-              serializedLesson.docFile =
-                serializedLesson.docFile.map(serializeFile);
+              serializedLesson.docFile = serializedLesson.docFile
+                .map(serializeFile)
+                .filter((f: UploadFile | null): f is UploadFile => f !== null);
             }
             if (
               serializedLesson.slideFile &&
               Array.isArray(serializedLesson.slideFile)
             ) {
-              serializedLesson.slideFile =
-                serializedLesson.slideFile.map(serializeFile);
+              serializedLesson.slideFile = serializedLesson.slideFile
+                .map(serializeFile)
+                .filter((f: UploadFile | null): f is UploadFile => f !== null);
             }
             if (
               serializedLesson.videoFile &&
               Array.isArray(serializedLesson.videoFile)
             ) {
-              serializedLesson.videoFile =
-                serializedLesson.videoFile.map(serializeFile);
+              serializedLesson.videoFile = serializedLesson.videoFile
+                .map(serializeFile)
+                .filter((f: UploadFile | null): f is UploadFile => f !== null);
             }
             if (
               serializedLesson.refDocFile &&
               Array.isArray(serializedLesson.refDocFile)
             ) {
-              serializedLesson.refDocFile =
-                serializedLesson.refDocFile.map(serializeFile);
+              serializedLesson.refDocFile = serializedLesson.refDocFile
+                .map(serializeFile)
+                .filter((f: UploadFile | null): f is UploadFile => f !== null);
             }
 
             return serializedLesson;
@@ -286,8 +283,10 @@ export const useCourseForm = () => {
     );
   };
 
-  const getFieldsToValidate = (): (string | (string | number)[])[] => {
-    if (currentStep === 0) {
+  const getFieldsToValidate = (
+    step: number
+  ): (string | (string | number)[])[] => {
+    if (step === 0) {
       const timeStateType = form.getFieldValue("timeStateType");
       const isHasBadge = form.getFieldValue("isHasBadge");
 
@@ -316,7 +315,7 @@ export const useCourseForm = () => {
     const chapters = form.getFieldValue("chapters") || [];
     const paths: (string | (string | number)[])[] = [];
 
-    if (currentStep === 1) {
+    if (step === 1) {
       paths.push("chapters");
       chapters.forEach((chap: IChapter, cIdx: number) => {
         paths.push(["chapters", cIdx, "title"]);
@@ -340,7 +339,7 @@ export const useCourseForm = () => {
       });
     }
 
-    if (currentStep === 2) {
+    if (step === 2) {
       chapters.forEach((chap: IChapter, cIdx: number) => {
         if (chap.lessons) {
           chap.lessons.forEach((less: ILesson, lIdx: number) => {
@@ -365,7 +364,6 @@ export const useCourseForm = () => {
                       questionIdx,
                     ];
                     paths.push([...questionPath, "title"]);
-                    paths.push([...questionPath, "score"]);
                   });
                 }
               });
@@ -378,10 +376,36 @@ export const useCourseForm = () => {
     return paths;
   };
 
-  const validateCurrentStep = async () => {
+  const validateCurrentStep = async (step?: number) => {
+    const stepToValidate = step ?? currentStep;
     try {
-      const fields = getFieldsToValidate();
+      const fields = getFieldsToValidate(stepToValidate);
 
+      if (stepToValidate === 0) {
+        const thumbnail = form.getFieldValue("thumbnail") as
+          | UploadFile[]
+          | undefined;
+        if (thumbnail && thumbnail.some((f) => f.status === "error")) {
+          message.error("Ảnh bìa upload thất bại, vui lòng thử lại");
+          setHasValidationError(true);
+          return false;
+        }
+
+        const courseBadgeFile = form.getFieldValue("courseBadgeFile") as
+          | UploadFile[]
+          | undefined;
+        const isHasBadge = form.getFieldValue("isHasBadge");
+        if (
+          isHasBadge === COURSE_END_PRIZE.BADGE.value &&
+          courseBadgeFile &&
+          courseBadgeFile.some((f) => f.status === "error")
+        ) {
+          message.error("Ảnh huy chương upload thất bại, vui lòng thử lại");
+          setHasValidationError(true);
+          return false;
+        }
+      }
+      stepToValidate;
       if (currentStep === 1) {
         const chapters = form.getFieldValue("chapters");
         if (!chapters || chapters.length === 0) {
@@ -397,8 +421,130 @@ export const useCourseForm = () => {
           setHasValidationError(true);
           return false;
         }
-      }
 
+        const chapterTitles = new Set<string>();
+        for (let cIdx = 0; cIdx < chapters.length; cIdx++) {
+          const chapter = chapters[cIdx] as IChapter;
+          const chapterTitle = (chapter.title || "").trim();
+
+          if (chapterTitle.length < 3) {
+            message.error(`Tên Chương ${cIdx + 1} phải có ít nhất 3 ký tự`);
+            form.scrollToField(["chapters", cIdx, "title"], {
+              behavior: "smooth",
+              block: "center",
+            });
+            setHasValidationError(true);
+            return false;
+          }
+
+          if (!chapter.lessons || chapter.lessons.length === 0) {
+            message.error(`Chương "${chapterTitle}" phải có ít nhất 1 Bài học`);
+            form.scrollToField(["chapters", cIdx, "title"], {
+              behavior: "smooth",
+              block: "center",
+            });
+            setHasValidationError(true);
+            return false;
+          }
+
+          const normalizedTitle = chapterTitle.toLowerCase();
+          if (chapterTitles.has(normalizedTitle)) {
+            message.error(
+              `Tên Chương "${chapterTitle}" bị trùng với chương khác`
+            );
+            form.scrollToField(["chapters", cIdx, "title"], {
+              behavior: "smooth",
+              block: "center",
+            });
+            setHasValidationError(true);
+            return false;
+          }
+          chapterTitles.add(normalizedTitle);
+
+          if (chapter.lessons && chapter.lessons.length > 0) {
+            const lessonTitles = new Set<string>();
+            for (let lIdx = 0; lIdx < chapter.lessons.length; lIdx++) {
+              const lesson = chapter.lessons[lIdx] as ILesson;
+              const lessonTitle = (lesson.title || "").trim();
+
+              if (lessonTitle.length < 3) {
+                message.error(
+                  `Tên Bài học ${
+                    lIdx + 1
+                  } trong Chương "${chapterTitle}" phải có ít nhất 3 ký tự`
+                );
+                form.scrollToField(
+                  ["chapters", cIdx, "lessons", lIdx, "title"],
+                  {
+                    behavior: "smooth",
+                    block: "center",
+                  }
+                );
+                setHasValidationError(true);
+                return false;
+              }
+
+              const normalizedLessonTitle = lessonTitle.toLowerCase();
+              if (lessonTitles.has(normalizedLessonTitle)) {
+                message.error(
+                  `Tên Bài học "${lessonTitle}" bị trùng trong Chương "${chapterTitle}"`
+                );
+                form.scrollToField(
+                  ["chapters", cIdx, "lessons", lIdx, "title"],
+                  {
+                    behavior: "smooth",
+                    block: "center",
+                  }
+                );
+                setHasValidationError(true);
+                return false;
+              }
+              lessonTitles.add(normalizedLessonTitle);
+
+              const hasVideoError =
+                lesson.type === "video" &&
+                lesson.videoFile &&
+                lesson.videoFile.some((f: UploadFile) => f.status === "error");
+              const hasDocError =
+                lesson.type === "document" &&
+                lesson.docFile &&
+                lesson.docFile.some((f: UploadFile) => f.status === "error");
+              const hasSlideError =
+                lesson.type === "slide" &&
+                lesson.slideFile &&
+                lesson.slideFile.some((f: UploadFile) => f.status === "error");
+              const hasRefDocError =
+                lesson.refDocFile &&
+                lesson.refDocFile.some((f: UploadFile) => f.status === "error");
+
+              if (hasVideoError || hasDocError || hasSlideError) {
+                message.error(
+                  `File chính của Bài học "${lessonTitle}" upload thất bại, vui lòng thử lại`
+                );
+                form.scrollToField(["chapters", cIdx, "lessons", lIdx], {
+                  behavior: "smooth",
+                  block: "center",
+                });
+                setHasValidationError(true);
+                return false;
+              }
+
+              if (hasRefDocError) {
+                message.error(
+                  `Tài liệu tham khảo của Bài học "${lessonTitle}" upload thất bại, vui lòng thử lại`
+                );
+                form.scrollToField(["chapters", cIdx, "lessons", lIdx], {
+                  behavior: "smooth",
+                  block: "center",
+                });
+                setHasValidationError(true);
+                return false;
+              }
+            }
+          }
+        }
+      }
+      stepToValidate;
       if (currentStep === 2) {
         const chapters = form.getFieldValue("chapters") || [];
         for (let cIdx = 0; cIdx < chapters.length; cIdx++) {
@@ -728,6 +874,11 @@ export const useCourseForm = () => {
       const isValid = await validateCurrentStep();
       if (!isValid) return;
     }
+
+    if (targetStep === 3) {
+      setHasValidationError(false);
+    }
+
     saveSnapshot(targetStep);
     setCurrentStep(targetStep);
   };
@@ -739,17 +890,14 @@ export const useCourseForm = () => {
   const mutation = useMutation({
     mutationFn: (values: ICourseApiPayload) => createCourseAPI(values),
     onSuccess: () => {
-      notification.success({
-        message: "Thành công",
-        description: "Đã tạo khóa học mới!",
-      });
+      message.success("Đã tạo khóa học mới thành công!");
       localStorage.removeItem(DRAFT_KEY);
       form.resetFields();
       setIsFormDirty(false);
       navigate("/course-management/list");
     },
     onError: (err: unknown) => {
-      notification.error({ message: "Lỗi", description: getErrorMessage(err) });
+      message.error(getErrorMessage(err) || "Có lỗi xảy ra khi tạo khóa học");
     },
   });
 
@@ -760,23 +908,36 @@ export const useCourseForm = () => {
 
     try {
       setIsSubmitting(true);
-      await form.validateFields();
+
+      for (let step = 0; step <= 2; step++) {
+        const isValid = await validateCurrentStep(step);
+
+        if (!isValid) {
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const rawValues = form.getFieldsValue(true);
+
+      const normalizedValues = normalizeEssayQuestions(
+        rawValues as ICreateCourseForm
+      );
 
       const sanitizeString = (text?: string | null) =>
         typeof text === "string" ? text.trim() : text ?? "";
 
-      const sanitizePassRate = (value: any) => {
+      const sanitizePassRate = (value: unknown) => {
         const num = Number(value);
         if (Number.isNaN(num)) return PASS_RATE_MIN;
         return Math.min(PASS_RATE_MAX, Math.max(PASS_RATE_MIN, num));
       };
 
       const sanitizedValues: ICreateCourseForm = {
-        ...rawValues,
+        ...normalizedValues,
         title: sanitizeString(rawValues.title),
         description: sanitizeString(rawValues.description),
-        chapters: (rawValues.chapters || []).map((chap: IChapter) => ({
+        chapters: (normalizedValues.chapters || []).map((chap: IChapter) => ({
           ...chap,
           title: sanitizeString(chap.title),
           lessons: (chap.lessons || []).map((lesson: ILesson) => ({

@@ -128,10 +128,11 @@ interface Props {
   value?: string;
   onChange?: (value: string) => void;
   isPreview?: boolean;
+  onBlur?: () => void;
 }
 
 export const TiptapEditor = memo(
-  ({ value, onChange, isPreview = false }: Props) => {
+  ({ value, onChange, isPreview = false, onBlur }: Props) => {
     const isInternalUpdate = useRef(false);
 
     const extensions = useMemo(() => [...baseExtensions], []);
@@ -160,6 +161,9 @@ export const TiptapEditor = memo(
               isInternalUpdate.current = false;
             }, 0);
           }
+        },
+        onBlur: () => {
+          onBlur?.();
         },
       },
       []

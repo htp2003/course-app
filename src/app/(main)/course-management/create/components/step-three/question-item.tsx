@@ -112,7 +112,7 @@ const QuestionItemComponent = ({
           <Form.Item
             name={[qIndex, "type"]}
             noStyle
-            initialValue={QUESTION_TYPE_MAP.CHOICE}
+            {...(!isPreview && { initialValue: QUESTION_TYPE_MAP.CHOICE })}
           >
             <Select
               size="small"
@@ -201,7 +201,7 @@ const QuestionItemComponent = ({
               <Form.Item
                 label="Chế độ đáp án"
                 name={[qIndex, "isMultipleChoice"]}
-                initialValue={false}
+                {...(!isPreview && { initialValue: false })}
                 className="mb-0"
               >
                 <Radio.Group onChange={handleModeChange} disabled={isPreview}>
@@ -247,7 +247,7 @@ const QuestionItemComponent = ({
                                 name={[opt.name, "isCorrect"]}
                                 valuePropName="checked"
                                 noStyle
-                                initialValue={false}
+                                {...(!isPreview && { initialValue: false })}
                                 trigger="onChange"
                               >
                                 {isMulti ? (

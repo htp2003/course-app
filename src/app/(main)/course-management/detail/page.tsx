@@ -80,7 +80,9 @@ export const CourseDetailPage = () => {
     const notFound = (error as any)?.response?.status === 404;
     return (
       <div className="p-10 text-center text-red-500">
-        {notFound ? "Khoá học không tồn tại" : "Lỗi dữ liệu"}
+        {notFound
+          ? "Khoá học không tồn tại"
+          : "Lỗi dữ liệu, vui lòng kiểm tra lại."}
         <div className="mt-4">
           <Button onClick={() => navigate("/course-management/list")}>
             Về danh sách

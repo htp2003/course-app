@@ -10,7 +10,7 @@ import {
   Radio,
 } from "antd";
 import { FileImageOutlined, TrophyOutlined } from "@ant-design/icons";
-import { TiptapEditor } from "../common/tiptap-editor";
+import { TiptapEditorWrapper as TiptapEditor } from "../common/tiptap-editor-lazy";
 import { ImageUpload } from "../common/image-upload";
 import {
   COURSE_CATEGORIES,
@@ -32,6 +32,8 @@ interface Props {
 }
 
 export const CourseInfoSection = ({ isPreview = false }: Props) => {
+  const form = Form.useFormInstance();
+
   return (
     <Card title="Thông tin cơ bản" className="shadow-sm mb-6 rounded-lg">
       <Row gutter={[32, 24]}>
@@ -67,7 +69,21 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
           <Form.Item
             name="title"
             label="Tên khoá học"
-            rules={[{ required: true, message: "Nhập tên khóa học" }]}
+            rules={[
+              { required: true, message: "Nhập tên khóa học" },
+              {
+                validator: (_, value) => {
+                  if (!value || !value.trim()) {
+                    return Promise.reject(
+                      new Error(
+                        "Tên khóa học không được để trống hoặc chỉ có khoảng trắng"
+                      )
+                    );
+                  }
+                  return Promise.resolve();
+                },
+              },
+            ]}
             validateTrigger="onBlur"
           >
             <Input
@@ -83,7 +99,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
           <Form.Item
             name="type"
             label="Loại khoá học"
-            initialValue={COURSE_TYPE.OBLIGATORY.value}
+            {...(!isPreview && { initialValue: COURSE_TYPE.OBLIGATORY.value })}
             rules={[{ required: true, message: "Chọn loại khoá học" }]}
           >
             <Radio.Group disabled={isPreview}>
@@ -113,13 +129,44 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
               placeholder="Chọn chủ đề..."
               options={COURSE_CATEGORIES}
               disabled={isPreview}
+              showSearch
+              filterOption={(input, option) =>
+                (option?.label ?? "")
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
+              notFoundContent="Không tìm thấy chủ đề"
             />
           </Form.Item>
 
           <Form.Item
             name="publishAt"
             label="Thời gian phát hành"
-            rules={[{ required: true, message: "Chọn ngày phát hành" }]}
+            rules={[
+              { required: true, message: "Chọn ngày phát hành" },
+              ({ getFieldValue }) => ({
+                validator: (_, value) => {
+                  const timeStateType = getFieldValue("timeStateType");
+                  const timeRange = getFieldValue("timeRange");
+
+                  if (
+                    timeStateType === COURSE_TIME_STATE_TYPE.CUSTOMIZE.value &&
+                    timeRange &&
+                    timeRange[0] &&
+                    value &&
+                    timeRange[0].isBefore(value)
+                  ) {
+                    return Promise.reject(
+                      new Error(
+                        "Thời gian phát hành phải trước hoặc bằng thời gian diễn ra"
+                      )
+                    );
+                  }
+                  return Promise.resolve();
+                },
+              }),
+            ]}
+            dependencies={["timeRange", "timeStateType"]}
           >
             <DatePicker
               showTime
@@ -128,13 +175,20 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
               className="w-full"
               disabledDate={disablePastDates}
               disabled={isPreview}
+              onChange={() => {
+                setTimeout(() => {
+                  form?.validateFields(["timeRange"]);
+                }, 0);
+              }}
             />
           </Form.Item>
 
           <Form.Item label="Thời gian khoá học" required className="mb-0">
             <Form.Item
               name="timeStateType"
-              initialValue={COURSE_TIME_STATE_TYPE.CUSTOMIZE.value}
+              {...(!isPreview && {
+                initialValue: COURSE_TIME_STATE_TYPE.CUSTOMIZE.value,
+              })}
               className="mb-2"
             >
               <Radio.Group disabled={isPreview}>
@@ -150,11 +204,13 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
             <Form.Item
               noStyle
               shouldUpdate={(prev, curr) =>
-                prev.timeStateType !== curr.timeStateType
+                prev.timeStateType !== curr.timeStateType ||
+                prev.publishAt !== curr.publishAt
               }
             >
               {({ getFieldValue }) => {
                 const timeType = getFieldValue("timeStateType");
+                const publishAt = getFieldValue("publishAt");
                 return timeType === COURSE_TIME_STATE_TYPE.CUSTOMIZE.value ? (
                   <Form.Item
                     name="timeRange"
@@ -162,6 +218,29 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
                       {
                         required: true,
                         message: "Vui lòng chọn khoảng thời gian",
+                      },
+                      {
+                        validator: (_, value) => {
+                          if (!value || !value[0] || !value[1]) {
+                            return Promise.resolve();
+                          }
+                          const [start, end] = value;
+                          if (end.isBefore(start)) {
+                            return Promise.reject(
+                              new Error(
+                                "Thời gian kết thúc phải sau thời gian bắt đầu"
+                              )
+                            );
+                          }
+                          if (publishAt && start.isBefore(publishAt)) {
+                            return Promise.reject(
+                              new Error(
+                                "Thời gian diễn ra phải sau hoặc bằng thời gian phát hành"
+                              )
+                            );
+                          }
+                          return Promise.resolve();
+                        },
                       },
                     ]}
                   >
@@ -185,7 +264,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
           <Form.Item label="Hoàn thành khóa học" required className="mb-0">
             <Form.Item
               name="isHasBadge"
-              initialValue={COURSE_END_PRIZE.NONE.value}
+              {...(!isPreview && { initialValue: COURSE_END_PRIZE.NONE.value })}
               className="mb-2"
             >
               <Radio.Group disabled={isPreview}>
@@ -243,7 +322,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
           <Form.Item
             name="isLearnInOrder"
             label="Học theo thứ tự"
-            initialValue={LEARN_ORDER.YES.value}
+            {...(!isPreview && { initialValue: LEARN_ORDER.YES.value })}
             rules={[{ required: true, message: "Chọn hình thức học" }]}
           >
             <Radio.Group disabled={isPreview}>
@@ -277,9 +356,14 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
                 },
               },
             ]}
-            validateTrigger={["onBlur", "onSubmit"]}
+            validateTrigger={["onChange", "onBlur"]}
           >
-            <TiptapEditor isPreview={isPreview} />
+            <TiptapEditor
+              isPreview={isPreview}
+              onBlur={() => {
+                form.validateFields(["description"]);
+              }}
+            />
           </Form.Item>
         </Col>
       </Row>

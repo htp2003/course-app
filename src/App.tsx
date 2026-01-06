@@ -5,8 +5,9 @@ import { MainLayout } from "./components/layouts/main-layout";
 import { ProtectedRoute } from "./components/auth/protected-route";
 import { LoginPage } from "./app/(auth)/login/page";
 
-import CourseListPage from "./app/(main)/course-management/list";
-
+const CourseListPage = lazy(
+  () => import("./app/(main)/course-management/list")
+);
 const CreateCoursePage = lazy(
   () => import("./app/(main)/course-management/create")
 );
@@ -14,6 +15,12 @@ const CourseDetailPage = lazy(() =>
   import("./app/(main)/course-management/detail/page").then((module) => ({
     default: module.CourseDetailPage,
   }))
+);
+
+const PageLoader = () => (
+  <div className="flex justify-center items-center h-screen">
+    <Spin size="large" tip="Đang tải..." />
+  </div>
 );
 
 function App() {
@@ -58,31 +65,23 @@ function App() {
               <Route
                 path="/course-management/create"
                 element={
-                  <Suspense
-                    fallback={
-                      <div className="flex justify-center items-center h-screen">
-                        <Spin size="large" />
-                      </div>
-                    }
-                  >
+                  <Suspense fallback={<PageLoader />}>
                     <CreateCoursePage />
                   </Suspense>
                 }
               />
               <Route
                 path="/course-management/list"
-                element={<CourseListPage />}
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <CourseListPage />
+                  </Suspense>
+                }
               />
               <Route
                 path="/course-management/detail/:id"
                 element={
-                  <Suspense
-                    fallback={
-                      <div className="flex justify-center items-center h-screen">
-                        <Spin size="large" />
-                      </div>
-                    }
-                  >
+                  <Suspense fallback={<PageLoader />}>
                     <CourseDetailPage />
                   </Suspense>
                 }

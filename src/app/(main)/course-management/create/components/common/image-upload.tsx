@@ -61,6 +61,13 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const [previewOpen, setPreviewOpen] = useState(false);
   const { message } = App.useApp();
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      setLoading(false);
+    };
+  }, []);
+
   const internalFileList = value || [];
   const singleFile = internalFileList[0];
   const hasFile = internalFileList.length > 0;
@@ -188,11 +195,19 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       onChange?.(newFileList);
       onSuccess?.(serverData);
       message.success("Upload thành công");
-    } catch {
+    } catch (error: any) {
+      // Clear file immediately on error
       onChange?.([]);
       setImageUrl("");
-      message.error("Upload thất bại");
-      onError?.(new Error("Upload failed"));
+      setLoading(false);
+
+      const isAuthError = error?.response?.status === 401;
+      if (isAuthError) {
+        message.error("Phiên đăng nhập hết hạn");
+      } else {
+        message.error("Upload thất bại");
+      }
+      onError?.(error instanceof Error ? error : new Error("Upload failed"));
     } finally {
       setLoading(false);
     }
@@ -202,7 +217,15 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     let newFileList = [...info.fileList];
     if (newFileList.length > 1) newFileList = newFileList.slice(-1);
 
-    newFileList = newFileList.filter((file) => file.status !== "error");
+    // Filter out error files and stuck uploading files
+    newFileList = newFileList.filter((file) => {
+      // Remove error files
+      if (file.status === "error") return false;
+      // Remove uploading files that failed (no response after error)
+      if (file.status === "uploading" && info.file.status === "error")
+        return false;
+      return true;
+    });
 
     newFileList = newFileList.map((file) => {
       if (file.response) {

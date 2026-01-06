@@ -172,8 +172,16 @@ export const mapUiToApiPayload = (values: ICreateCourseForm) => {
     };
   });
 
+  const toSafeDayjs = (value: unknown) => {
+    if (!value) return dayjs();
+    if (typeof value === "object" && value !== null && "$d" in value) {
+      return dayjs((value as { $d: string | Date }).$d);
+    }
+    return dayjs(value as string | Date);
+  };
+
   const publishAt = values.publishAt
-    ? dayjs(values.publishAt).format(DATE_FORMAT)
+    ? toSafeDayjs(values.publishAt).format(DATE_FORMAT)
     : dayjs().format(DATE_FORMAT);
 
   let startTime = null;
@@ -181,10 +189,10 @@ export const mapUiToApiPayload = (values: ICreateCourseForm) => {
 
   if (values.timeStateType === COURSE_TIME_STATE_TYPE.CUSTOMIZE.value) {
     if (values.timeRange && values.timeRange[0]) {
-      startTime = dayjs(values.timeRange[0]).format(DATE_FORMAT);
+      startTime = toSafeDayjs(values.timeRange[0]).format(DATE_FORMAT);
     }
     if (values.timeRange && values.timeRange[1]) {
-      endTime = dayjs(values.timeRange[1]).format(DATE_FORMAT);
+      endTime = toSafeDayjs(values.timeRange[1]).format(DATE_FORMAT);
     }
   }
 
@@ -215,8 +223,8 @@ export const mapUiToApiPayload = (values: ICreateCourseForm) => {
     courseTopics: Array.isArray(values.categories)
       ? values.categories.map((c: number | string) => Number(c))
       : values.category
-        ? [Number(values.category)]
-        : [],
+      ? [Number(values.category)]
+      : [],
     isLearnInOrder: values.isLearnInOrder ?? true,
   };
 

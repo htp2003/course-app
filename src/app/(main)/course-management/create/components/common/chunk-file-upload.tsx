@@ -52,6 +52,14 @@ export const ChunkFileUpload: React.FC<ChunkFileUploadProps> = ({
   const [percent, setPercent] = useState(0);
   const [videoUrl, setVideoUrl] = useState<string>("");
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      setUploading(false);
+      setPercent(0);
+    };
+  }, []);
+
   const internalFileList = value || [];
   const singleFile = internalFileList[0];
   const hasFile = internalFileList.length > 0;
@@ -156,9 +164,20 @@ export const ChunkFileUpload: React.FC<ChunkFileUploadProps> = ({
       onChange?.(newFileList);
       onSuccess?.(serverData);
       message.success("Upload thành công");
-    } catch (err) {
+    } catch (err: any) {
+      // Clear file immediately on error
+      onChange?.([]);
+      setVideoUrl("");
+      setUploading(false);
+      setPercent(0);
+
+      const isAuthError = err?.response?.status === 401;
+      if (isAuthError) {
+        message.error("Phiên đăng nhập hết hạn");
+      } else {
+        message.error("Upload thất bại");
+      }
       onError?.(err instanceof Error ? err : new Error("Upload failed"));
-      message.error("Upload thất bại");
     } finally {
       setUploading(false);
       setPercent(0);
@@ -171,6 +190,14 @@ export const ChunkFileUpload: React.FC<ChunkFileUploadProps> = ({
     let newFileList = [...info.fileList];
     if (maxCount === 1) newFileList = newFileList.slice(-1);
     else newFileList = newFileList.slice(0, maxCount);
+
+    // Filter out error files and stuck uploading files
+    newFileList = newFileList.filter((file) => {
+      if (file.status === "error") return false;
+      if (file.status === "uploading" && info.file.status === "error")
+        return false;
+      return true;
+    });
 
     newFileList = newFileList.map((file) => {
       if (file.response) {

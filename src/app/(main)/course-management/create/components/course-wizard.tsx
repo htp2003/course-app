@@ -119,7 +119,7 @@ export const CourseWizard = () => {
           setHasValidationError(hasError);
         }}
       >
-        {hasValidationError && (
+        {hasValidationError && currentStep < 3 && (
           <div className="mb-4">
             <Alert
               type="error"

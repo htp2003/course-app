@@ -83,12 +83,12 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
                 },
               },
             ]}
-            validateTrigger="onBlur"
+            validateTrigger="onChange"
           >
             <Input
               placeholder="Nhập tên khóa học..."
               disabled={isPreview}
-              onBlur={(e) => {
+              onChange={(e) => {
                 const trimmed = e.target.value.trim();
                 e.target.value = trimmed;
               }}
@@ -356,7 +356,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
                 },
               },
             ]}
-            validateTrigger="onChange"
+            validateTrigger="onBlur"
           >
             <TiptapEditor isPreview={isPreview} />
           </Form.Item>

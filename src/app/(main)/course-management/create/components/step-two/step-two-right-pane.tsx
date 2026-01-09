@@ -13,9 +13,32 @@ export const StepTwoRightPane = memo(
   ({ isPreview = false, anchorPrefix = "anchor", anchorRootId }: Props) => {
     return (
       <div className="flex flex-col gap-6" id={anchorRootId}>
-        <Form.List name="chapters">
-          {(fields, { add, remove }) => (
+        <Form.List
+          name="chapters"
+          rules={
+            isPreview
+              ? []
+              : [
+                  {
+                    validator: async (_, chapters) => {
+                      if (!Array.isArray(chapters) || chapters.length === 0) {
+                        throw new Error(
+                          "Vui lòng tạo ít nhất 1 Chương nội dung!"
+                        );
+                      }
+                    },
+                  },
+                ]
+          }
+        >
+          {(fields, { add, remove }, meta) => (
             <>
+              {!isPreview && meta.errors.length > 0 && (
+                <div>
+                  <Form.ErrorList errors={meta.errors} />
+                </div>
+              )}
+
               {fields.length === 0 && !isPreview && (
                 <div className="text-center py-20 bg-gray-50 border-2 border-dashed rounded-xl">
                   <Empty description="Hãy bắt đầu xây dựng nội dung khóa học" />

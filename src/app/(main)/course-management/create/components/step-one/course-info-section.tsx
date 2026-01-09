@@ -10,6 +10,7 @@ import {
   Radio,
 } from "antd";
 import { FileImageOutlined, TrophyOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 import type { Dayjs } from "dayjs";
 import { TiptapEditorWrapper as TiptapEditor } from "../common/tiptap-editor-lazy";
 import { ImageUpload } from "../common/image-upload";
@@ -46,7 +47,21 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
               name="thumbnail"
               getValueFromEvent={normFile}
               noStyle
-              rules={[{ required: true, message: "Vui lòng chọn ảnh bìa" }]}
+              rules={[
+                { required: true, message: "Vui lòng chọn ảnh bìa" },
+                {
+                  validator: async (_, fileList) => {
+                    if (
+                      Array.isArray(fileList) &&
+                      fileList.some((f) => f?.status === "error")
+                    ) {
+                      throw new Error(
+                        "Ảnh bìa upload thất bại, vui lòng thử lại"
+                      );
+                    }
+                  },
+                },
+              ]}
               validateTrigger="onChange"
             >
               <ImageUpload
@@ -176,7 +191,10 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
               format="DD/MM/YYYY HH:mm"
               placeholder="Chọn thời gian phát hành"
               className="w-full"
-              disabledDate={disablePastDates}
+              disabledDate={(current) => {
+                if (!current) return false;
+                return current.isBefore(dayjs().add(1, "day").startOf("day"));
+              }}
               disabled={isPreview}
             />
           </Form.Item>
@@ -302,6 +320,18 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
                         {
                           required: true,
                           message: "Vui lòng tải ảnh huy chương",
+                        },
+                        {
+                          validator: async (_, fileList) => {
+                            if (
+                              Array.isArray(fileList) &&
+                              fileList.some((f) => f?.status === "error")
+                            ) {
+                              throw new Error(
+                                "Ảnh huy chương upload thất bại, vui lòng thử lại"
+                              );
+                            }
+                          },
                         },
                       ]}
                       noStyle

@@ -201,12 +201,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       setImageUrl("");
       setLoading(false);
 
-      const isAuthError = error?.response?.status === 401;
-      if (isAuthError) {
-        message.error("Phiên đăng nhập hết hạn");
-      } else {
-        message.error("Upload thất bại");
-      }
+      message.error("Upload thất bại");
       onError?.(error instanceof Error ? error : new Error("Upload failed"));
     } finally {
       setLoading(false);
@@ -271,20 +266,22 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           />
         )}
 
-        {!disabled && (
+        {!loading && imageUrl && (
           <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 z-10 rounded-lg">
             <EyeOutlined
               className="text-white text-xl cursor-pointer hover:scale-110"
               onClick={handlePreview}
             />
-            <DeleteOutlined
-              className="text-white text-xl cursor-pointer hover:text-red-400 hover:scale-110"
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange?.([]);
-                setImageUrl("");
-              }}
-            />
+            {!disabled && (
+              <DeleteOutlined
+                className="text-white text-xl cursor-pointer hover:text-red-400 hover:scale-110"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange?.([]);
+                  setImageUrl("");
+                }}
+              />
+            )}
           </div>
         )}
 

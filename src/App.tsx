@@ -30,7 +30,7 @@ function App() {
       componentSize="small"
       theme={{
         token: {
-          colorPrimary: "#4F46E5",
+          colorPrimary: "#2563EB",
           borderRadius: 8,
           fontFamily: "'Be Vietnam Pro', sans-serif",
         },
@@ -42,7 +42,7 @@ function App() {
           },
           Menu: {
             darkItemBg: "#0F172A",
-            darkItemSelectedBg: "#4F46E5",
+            darkItemSelectedBg: "#2563EB",
             darkItemColor: "#94A3B8",
             darkItemSelectedColor: "#FFFFFF",
           },

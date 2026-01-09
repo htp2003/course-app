@@ -1,4 +1,5 @@
 import { Form, notification } from "antd";
+import type { NamePath } from "antd/es/form/interface";
 import { useEffect, useMemo, useRef } from "react";
 
 export const ValidationErrorsSummary = ({
@@ -15,7 +16,7 @@ export const ValidationErrorsSummary = ({
   const errorsToDisplay = useMemo(() => {
     const allErrors = form.getFieldsError().filter((e) => e.errors.length > 0);
 
-    return allErrors.filter((err) => {
+    const stepErrors = allErrors.filter((err) => {
       const path = err.name;
 
       if (currentStep === 0) return path[0] !== "chapters";
@@ -26,6 +27,45 @@ export const ValidationErrorsSummary = ({
 
       return false;
     });
+
+    const grouped = new Map<string, { name: NamePath; errors: string[] }>();
+
+    const push = (key: string, item: { name: NamePath; errors: string[] }) => {
+      if (!grouped.has(key)) grouped.set(key, item);
+    };
+
+    for (const err of stepErrors) {
+      const path = err.name as (string | number)[];
+      const message = err.errors[0] ?? "Thông tin chưa hợp lệ";
+
+      const optionsIdx = path.lastIndexOf("options");
+      const isOptionContentField =
+        optionsIdx >= 0 &&
+        path.includes("content") &&
+        message === "Nhập đáp án";
+      const isOptionsListError =
+        optionsIdx >= 0 && message === "Vui lòng điền nội dung tất cả đáp án";
+
+      if (isOptionContentField || isOptionsListError) {
+        const optionsPath = path.slice(0, optionsIdx + 1) as NamePath;
+        const groupKey = `options:${currentStep}:${(
+          optionsPath as (string | number)[]
+        ).join(".")}`;
+        push(groupKey, {
+          name: optionsPath,
+          errors: ["Vui lòng điền nội dung tất cả đáp án"],
+        });
+        continue;
+      }
+
+      const nameKey = Array.isArray(path) ? path.join(".") : String(path);
+      push(`field:${currentStep}:${nameKey}:${message}`, {
+        name: err.name,
+        errors: [message],
+      });
+    }
+
+    return Array.from(grouped.values());
   }, [form, currentStep]);
 
   useEffect(() => {

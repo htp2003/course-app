@@ -340,6 +340,20 @@ export const LessonItem = memo(
                                     required: true,
                                     message: "Vui lòng tải lên tệp tin",
                                   },
+                                  {
+                                    validator: async (_, fileList) => {
+                                      if (
+                                        Array.isArray(fileList) &&
+                                        fileList.some(
+                                          (f) => f?.status === "error"
+                                        )
+                                      ) {
+                                        throw new Error(
+                                          "Tệp tin upload thất bại, vui lòng thử lại"
+                                        );
+                                      }
+                                    },
+                                  },
                                 ]
                           }
                         >
@@ -434,12 +448,36 @@ export const LessonItem = memo(
                         );
                       }
 
+                      if (isPreview && !hasRefDoc) {
+                        return null;
+                      }
+
                       return (
                         <Form.Item
                           label="Tài liệu tham khảo (nếu có)"
                           name={[lessonIndex, "refDocFile"]}
                           getValueFromEvent={normFile}
                           className="mb-0 h-full w-full"
+                          rules={
+                            isPreview
+                              ? []
+                              : [
+                                  {
+                                    validator: async (_, fileList) => {
+                                      if (
+                                        Array.isArray(fileList) &&
+                                        fileList.some(
+                                          (f) => f?.status === "error"
+                                        )
+                                      ) {
+                                        throw new Error(
+                                          "Tài liệu tham khảo upload thất bại, vui lòng thử lại"
+                                        );
+                                      }
+                                    },
+                                  },
+                                ]
+                          }
                         >
                           <FileUpload
                             accept={UPLOAD_CONFIG.DOCUMENT.ACCEPT}

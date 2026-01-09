@@ -100,9 +100,29 @@ export const ChapterItem = memo(
         </div>
 
         <div className="pl-4 md:pl-10 border-l-2 border-indigo-50 space-y-3">
-          <Form.List name={[fieldIndex, "lessons"]}>
-            {(subFields, { add, remove: removeLesson }) => (
+          <Form.List
+            name={[fieldIndex, "lessons"]}
+            rules={
+              isPreview
+                ? []
+                : [
+                    {
+                      validator: async (_, lessons) => {
+                        if (!Array.isArray(lessons) || lessons.length === 0) {
+                          throw new Error("Chương này cần ít nhất 1 Bài học");
+                        }
+                      },
+                    },
+                  ]
+            }
+          >
+            {(subFields, { add, remove: removeLesson }, meta) => (
               <>
+                {!isPreview && meta.errors.length > 0 && (
+                  <div>
+                    <Form.ErrorList errors={meta.errors} />
+                  </div>
+                )}
                 {subFields.map((subField) => (
                   <div
                     key={subField.key}

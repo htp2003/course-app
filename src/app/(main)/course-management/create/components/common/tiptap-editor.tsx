@@ -68,21 +68,6 @@ const toYouTubeEmbedUrl = (url: string, nocookie = true) => {
   return `https://www.youtube${nocookie ? "-nocookie" : ""}.com/embed/${id}`;
 };
 
-/**
- * Hàm dọn dẹp HTML dư thừa để tránh tự chèn thẻ <p>
- */
-const normalizeEditorHtml = (html: string): string => {
-  if (!html || html === "<p></p>") return "";
-
-  const normalized = html
-    .replace(/<p>[\s\u00A0]*<br\s*\/?>[\s\u00A0]*<\/p>/g, "")
-    .replace(/<p>[\s\u00A0]*<\/p>/g, "")
-    .replace(/<p>\s*(<div[^>]*>.*?<\/div>)\s*<\/p>/gs, "$1")
-    .replace(/(<p><\/p>){2,}/g, "<p></p>");
-
-  return normalized.trim();
-};
-
 const extractUploadedUrl = (payload: unknown): string => {
   if (typeof payload === "string") return payload;
   if (!payload || typeof payload !== "object") return "";
@@ -118,6 +103,20 @@ const extractUploadedUrl = (payload: unknown): string => {
   return "";
 };
 
+
+const areHtmlContentEqual = (
+  html1: string | undefined | null,
+  html2: string | undefined | null
+) => {
+  if (!html1 && !html2) return true;
+  if (!html1 || !html2) return false;
+
+  const clean1 = html1.replace(/<p><\/p>/g, "").trim();
+  const clean2 = html2.replace(/<p><\/p>/g, "").trim();
+
+  return clean1 === clean2;
+};
+
 const baseExtensions = [
   Document,
   Text,
@@ -144,6 +143,7 @@ const baseExtensions = [
   Emoji,
   Link.configure({ openOnClick: false }),
   Image.configure({
+    defaultInline: false,
     resourceImage: "both",
     upload: async (file: File) => {
       const res = await uploadImageAPI(file);
@@ -161,7 +161,11 @@ const baseExtensions = [
       return url;
     },
   }),
-  Youtube.configure({ nocookie: true, controls: true }),
+  Youtube.configure({
+    nocookie: true,
+    controls: true,
+    inline: false,
+  }),
 ];
 
 const CustomToolbar = memo(() => (
@@ -215,7 +219,6 @@ export const TiptapEditor = memo(
     const editor = useEditor(
       {
         editable: !isPreview,
-        content: value,
         extensions,
         immediatelyRender: false,
         shouldRerenderOnTransaction: false,
@@ -227,15 +230,17 @@ export const TiptapEditor = memo(
             ].join(" "),
           },
         },
+        parseOptions: {
+          preserveWhitespace: "full",
+        },
         onUpdate: ({ editor }) => {
-          const html = editor.getHTML();
-          const normalized = normalizeEditorHtml(html);
-          const currentPropValue = normalizeEditorHtml(value ?? "");
+          let html = editor.getHTML();
 
-          if (normalized !== currentPropValue) {
+          if (html === "<p></p>") html = "";
+
+          if (!isInternalUpdate.current && html !== value) {
             isInternalUpdate.current = true;
-            onChange?.(normalized);
-
+            onChange?.(html);
             setTimeout(() => {
               isInternalUpdate.current = false;
             }, 50);
@@ -249,15 +254,22 @@ export const TiptapEditor = memo(
     );
 
     useEffect(() => {
-      if (editor && value !== undefined && !isInternalUpdate.current) {
-        const currentEditorContent = normalizeEditorHtml(editor.getHTML());
-        const incomingValue = normalizeEditorHtml(value);
+      if (!editor || isInternalUpdate.current) return;
 
-        if (currentEditorContent !== incomingValue) {
-          editor.commands.setContent(incomingValue || "<p></p>", {
-            emitUpdate: false,
-          });
-        }
+      const currentContent = editor.getHTML();
+
+      if (!areHtmlContentEqual(currentContent, value)) {
+        const { from, to } = editor.state.selection;
+
+        editor.commands.setContent(value || "", {
+          emitUpdate: false,
+        });
+
+        try {
+          if (to <= editor.state.doc.content.size) {
+            editor.commands.setTextSelection({ from, to });
+          }
+        } catch (e) {}
       }
     }, [value, editor]);
 

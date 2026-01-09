@@ -1,6 +1,5 @@
 import {
   Layout,
-  Button,
   Dropdown,
   type MenuProps,
   theme,
@@ -8,23 +7,18 @@ import {
   App,
 } from "antd";
 import {
-  RightOutlined,
   LogoutOutlined,
   DownOutlined,
   UserOutlined,
-  LeftOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "../../context/auth-context";
 import { useNavigate } from "react-router-dom";
 
 const { Header } = Layout;
 
-type Props = {
-  collapsed: boolean;
-  setCollapsed: (collapsed: boolean) => void;
-};
 
-export const AppHeader = ({ collapsed, setCollapsed }: Props) => {
+
+export const AppHeader = () => {
   const {
     token: { colorBgContainer },
   } = theme.useToken();
@@ -54,38 +48,33 @@ export const AppHeader = ({ collapsed, setCollapsed }: Props) => {
   return (
     <Header
       style={{ padding: 0, background: colorBgContainer }}
-      className="flex items-center justify-between px-4 shadow-sm sticky top-0 z-20"
+      className="flex items-center justify-end px-6 shadow-sm sticky top-0 z-20 h-16 transition-all duration-200"
     >
-      <Button
-        type="text"
-        icon={collapsed ? <RightOutlined /> : <LeftOutlined />}
-        onClick={() => setCollapsed(!collapsed)}
-        style={{ fontSize: "16px", width: 64, height: 64 }}
-      />
 
-      <div className="mr-6">
+      <div className="">
         <Dropdown
           menu={{ items }}
           placement="bottomRight"
           arrow
           trigger={["click"]}
         >
-          <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 py-1 px-2 rounded transition-all select-none border border-transparent hover:border-gray-200 group">
+          <div className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 py-1.5 px-3 rounded-lg transition-all select-none border border-transparent hover:border-gray-200 group">
             <Avatar
-              style={{ backgroundColor: "#87d068" }}
+              size="default"
+              style={{ backgroundColor: "#2563EB" }}
               icon={<UserOutlined />}
             />
             <div className="flex flex-col items-end justify-center">
-              <span className="text-sm font-bold text-gray-800 leading-none mb-2">
+              <span className="text-sm font-semibold text-gray-700 leading-tight">
                 {user?.fullName || "User"}
               </span>
 
-              <span className="text-[10px] text-indigo-600 font-bold uppercase leading-none">
+              <span className="text-[11px] text-blue-600 font-bold uppercase leading-tight mt-0.5">
                 {user?.role || "Member"}
               </span>
             </div>
 
-            <DownOutlined className="text-gray-400 text-[10px]" />
+            <DownOutlined className="text-gray-400 text-[10px] ml-1" />
           </div>
         </Dropdown>
       </div>

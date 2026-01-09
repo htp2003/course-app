@@ -4,7 +4,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import type { UploadFile } from "antd/es/upload/interface";
-import type { FieldData } from "rc-field-form/lib/interface";
 
 import { createCourseAPI } from "../services/api";
 import { getErrorMessage } from "../../common/utils/utils";
@@ -329,317 +328,21 @@ export const useCourseForm = () => {
       return baseFields;
     }
 
-    const chapters = form.getFieldValue("chapters") || [];
-    const paths: (string | (string | number)[])[] = [];
-
-    if (step === 1) {
-      paths.push("chapters");
-      chapters.forEach((chap: IChapter, cIdx: number) => {
-        paths.push(["chapters", cIdx, "title"]);
-        if (chap.lessons) {
-          chap.lessons.forEach((less: ILesson, lIdx: number) => {
-            const lessonPath = ["chapters", cIdx, "lessons", lIdx];
-
-            paths.push([...lessonPath, "title"]);
-            paths.push([...lessonPath, "duration"]);
-            paths.push([...lessonPath, "type"]);
-
-            if (less.type === "document") {
-              paths.push([...lessonPath, "docFile"]);
-            } else if (less.type === "slide") {
-              paths.push([...lessonPath, "slideFile"]);
-            } else if (less.type === "video") {
-              paths.push([...lessonPath, "videoFile"]);
-            }
-          });
-        }
-      });
-    }
-
-    if (step === 2) {
-      chapters.forEach((chap: IChapter, cIdx: number) => {
-        if (chap.lessons) {
-          chap.lessons.forEach((less: ILesson, lIdx: number) => {
-            if (less.quizzes) {
-              less.quizzes.forEach((quiz: IQuiz, qIdx: number) => {
-                const quizPath = [
-                  "chapters",
-                  cIdx,
-                  "lessons",
-                  lIdx,
-                  "quizzes",
-                  qIdx,
-                ];
-                paths.push([...quizPath, "title"]);
-                paths.push([...quizPath, "examPassRate"]);
-
-                if (quiz.questions) {
-                  quiz.questions.forEach((_question, questionIdx: number) => {
-                    const questionPath = [
-                      ...quizPath,
-                      "questions",
-                      questionIdx,
-                    ];
-                    paths.push([...questionPath, "title"]);
-                  });
-                }
-              });
-            }
-          });
-        }
-      });
-    }
-
-    return paths;
+    return [];
   };
 
-  const validateCurrentStep = async (step?: number) => {
+  const validateStep = async (step?: number) => {
     const stepToValidate = step ?? currentStep;
     let isValid = true;
-    const manualErrors: FieldData[] = []; // Mảng gom lỗi thủ công
 
-    // 1. Validate rules cơ bản
     try {
-      const fields = getFieldsToValidate(stepToValidate);
-      await form.validateFields(fields);
+      if (stepToValidate === 0) {
+        const fields = getFieldsToValidate(0);
+        await form.validateFields(fields);
+      } else if (stepToValidate === 1 || stepToValidate === 2) {
+        await form.validateFields(["chapters"], { recursive: true });
+      }
     } catch (_error: unknown) {
-      isValid = false;
-    }
-
-    // 2. Validate logic nghiệp vụ
-    if (stepToValidate === 0) {
-      const thumbnail = form.getFieldValue("thumbnail") as
-        | UploadFile[]
-        | undefined;
-      if (thumbnail && thumbnail.some((f) => f.status === "error")) {
-        manualErrors.push({
-          name: "thumbnail",
-          errors: ["Ảnh bìa upload thất bại, vui lòng thử lại"],
-        });
-      }
-
-      const courseBadgeFile = form.getFieldValue("courseBadgeFile") as
-        | UploadFile[]
-        | undefined;
-      const isHasBadge = form.getFieldValue("isHasBadge");
-      if (
-        isHasBadge === COURSE_END_PRIZE.BADGE.value &&
-        courseBadgeFile &&
-        courseBadgeFile.some((f) => f.status === "error")
-      ) {
-        manualErrors.push({
-          name: "courseBadgeFile",
-          errors: ["Ảnh huy chương upload thất bại, vui lòng thử lại"],
-        });
-      }
-    }
-
-    if (stepToValidate === 1) {
-      const chapters = form.getFieldValue("chapters");
-      if (!chapters || chapters.length === 0) {
-        manualErrors.push({
-          name: "chapters",
-          errors: ["Vui lòng tạo ít nhất 1 Chương nội dung!"],
-        });
-      } else {
-        const hasLesson = chapters.some(
-          (ch: IChapter) => ch.lessons && ch.lessons.length > 0
-        );
-        if (!hasLesson) {
-          manualErrors.push({
-            name: "chapters",
-            errors: ["Vui lòng tạo ít nhất 1 Bài học trong khóa học!"],
-          });
-        }
-
-        for (let cIdx = 0; cIdx < chapters.length; cIdx++) {
-          const chapter = chapters[cIdx] as IChapter;
-          const chapterTitle = (chapter.title || "").trim();
-
-          if (chapterTitle.length < 3) {
-            manualErrors.push({
-              name: ["chapters", cIdx, "title"],
-              errors: ["Tên Chương phải có ít nhất 3 ký tự"],
-            });
-          }
-
-          if (!chapter.lessons || chapter.lessons.length === 0) {
-            manualErrors.push({
-              name: ["chapters", cIdx, "title"],
-              errors: ["Chương này cần ít nhất 1 Bài học"],
-            });
-          }
-
-          if (chapter.lessons && chapter.lessons.length > 0) {
-            for (let lIdx = 0; lIdx < chapter.lessons.length; lIdx++) {
-              const lesson = chapter.lessons[lIdx] as ILesson;
-              const lessonTitle = (lesson.title || "").trim();
-
-              if (lessonTitle.length < 3) {
-                manualErrors.push({
-                  name: ["chapters", cIdx, "lessons", lIdx, "title"],
-                  errors: ["Tên Bài học phải có ít nhất 3 ký tự"],
-                });
-              }
-
-              const hasVideoError =
-                lesson.type === "video" &&
-                lesson.videoFile &&
-                lesson.videoFile.some((f: UploadFile) => f.status === "error");
-              const hasDocError =
-                lesson.type === "document" &&
-                lesson.docFile &&
-                lesson.docFile.some((f: UploadFile) => f.status === "error");
-              const hasSlideError =
-                lesson.type === "slide" &&
-                lesson.slideFile &&
-                lesson.slideFile.some((f: UploadFile) => f.status === "error");
-              const hasRefDocError =
-                lesson.refDocFile &&
-                lesson.refDocFile.some((f: UploadFile) => f.status === "error");
-
-              if (hasVideoError)
-                manualErrors.push({
-                  name: ["chapters", cIdx, "lessons", lIdx, "videoFile"],
-                  errors: ["File video lỗi upload"],
-                });
-              if (hasDocError)
-                manualErrors.push({
-                  name: ["chapters", cIdx, "lessons", lIdx, "docFile"],
-                  errors: ["File tài liệu lỗi upload"],
-                });
-              if (hasSlideError)
-                manualErrors.push({
-                  name: ["chapters", cIdx, "lessons", lIdx, "slideFile"],
-                  errors: ["File slide lỗi upload"],
-                });
-              if (hasRefDocError)
-                manualErrors.push({
-                  name: ["chapters", cIdx, "lessons", lIdx, "refDocFile"],
-                  errors: ["Tài liệu tham khảo lỗi upload"],
-                });
-            }
-          }
-        }
-      }
-    }
-
-    if (stepToValidate === 2) {
-      const chapters = form.getFieldValue("chapters") || [];
-      for (let cIdx = 0; cIdx < chapters.length; cIdx++) {
-        const chapter = chapters[cIdx] as IChapter;
-        if (!chapter.lessons) continue;
-
-        for (let lIdx = 0; lIdx < chapter.lessons.length; lIdx++) {
-          const lesson = chapter.lessons[lIdx];
-          if (!lesson.quizzes) continue;
-
-          for (let qIdx = 0; qIdx < lesson.quizzes.length; qIdx++) {
-            const quiz = lesson.quizzes[qIdx] as IQuiz;
-            const passRate = Number(quiz.examPassRate);
-            const quizPath = [
-              "chapters",
-              cIdx,
-              "lessons",
-              lIdx,
-              "quizzes",
-              qIdx,
-            ];
-
-            const questions = quiz.questions || [];
-
-            if (passRate > PASS_RATE_MAX || passRate < PASS_RATE_MIN) {
-              manualErrors.push({
-                name: [...quizPath, "examPassRate"],
-                errors: [`Tỉ lệ đạt phải từ 0 đến 100`],
-              });
-            }
-
-            if (questions.length === 0) {
-              manualErrors.push({
-                name: [...quizPath, "title"],
-                errors: [`Quiz "${quiz.title || ""}" cần ít nhất 1 câu hỏi`],
-              });
-            }
-
-            for (
-              let questionIdx = 0;
-              questionIdx < questions.length;
-              questionIdx++
-            ) {
-              const question = questions[questionIdx] as IQuestion;
-              const qPath = [...quizPath, "questions", questionIdx];
-              const normalizedTitle = (question.title || "").trim();
-
-              if (!normalizedTitle) {
-                manualErrors.push({
-                  name: [...qPath, "title"],
-                  errors: ["Vui lòng nhập nội dung câu hỏi"],
-                });
-              }
-
-              if (question.type === "essay") continue;
-
-              const options = question.options || [];
-              const isMulti = question.isMultipleChoice ?? false;
-
-              if (options.length < 2) {
-                manualErrors.push({
-                  name: [...qPath, "title"],
-                  errors: ["Cần ít nhất 2 đáp án"],
-                });
-              }
-
-              if (isMulti && options.length < 3) {
-                manualErrors.push({
-                  name: [...qPath, "title"],
-                  errors: ["Chế độ nhiều đáp án đúng cần ít nhất 3 lựa chọn"],
-                });
-              }
-
-              const emptyOptions = options.filter(
-                (o: IAnswerOption) => !(o?.content || "").trim()
-              );
-              if (emptyOptions.length > 0) {
-                manualErrors.push({
-                  name: [...qPath, "title"],
-                  errors: ["Vui lòng điền nội dung tất cả đáp án"],
-                });
-              }
-
-              const correctCount = options.filter(
-                (o: IAnswerOption) => o?.isCorrect
-              ).length;
-
-              if (!isMulti) {
-                if (correctCount !== 1) {
-                  manualErrors.push({
-                    name: [...qPath, "title"],
-                    errors: ["Vui lòng chọn đúng 1 đáp án đúng"],
-                  });
-                }
-              } else {
-                if (correctCount < 1) {
-                  manualErrors.push({
-                    name: [...qPath, "title"],
-                    errors: ["Vui lòng chọn ít nhất 1 đáp án đúng"],
-                  });
-                }
-                if (correctCount === options.length && options.length > 0) {
-                  manualErrors.push({
-                    name: [...qPath, "title"],
-                    errors: ["Phải có ít nhất 1 đáp án sai"],
-                  });
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (manualErrors.length > 0) {
-      form.setFields(manualErrors);
       isValid = false;
     }
 
@@ -662,7 +365,7 @@ export const useCourseForm = () => {
 
   const handleStepChange = async (targetStep: number) => {
     if (targetStep > currentStep) {
-      const isValid = await validateCurrentStep();
+      const isValid = await validateStep();
       if (!isValid) return;
     }
 
@@ -708,7 +411,7 @@ export const useCourseForm = () => {
 
       let allValid = true;
       for (let step = 0; step <= 2; step++) {
-        const isValid = await validateCurrentStep(step);
+        const isValid = await validateStep(step);
         if (!isValid) {
           allValid = false;
           setCurrentStep(step);
@@ -722,6 +425,13 @@ export const useCourseForm = () => {
       }
 
       const rawValues = form.getFieldsValue(true);
+
+      if (rawValues.publishAt && dayjs.isDayjs(rawValues.publishAt)) {
+        if (rawValues.publishAt.isBefore(dayjs())) {
+          rawValues.publishAt = dayjs();
+          form.setFieldValue("publishAt", dayjs());
+        }
+      }
 
       const normalizedValues = normalizeEssayQuestions(
         rawValues as ICreateCourseForm

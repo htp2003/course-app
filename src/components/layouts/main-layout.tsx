@@ -22,7 +22,7 @@ export const MainLayout = () => {
       <AppSidebar collapsed={collapsed} setCollapsed={setCollapsed} />
 
       <Layout className="transition-all duration-200 w-full">
-        <AppHeader collapsed={collapsed} setCollapsed={setCollapsed} />
+        <AppHeader />
 
         <Content className="m-2 md:m-4 overflow-initial">
           <AppBreadcrumb />

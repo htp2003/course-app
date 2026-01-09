@@ -89,9 +89,29 @@ export const QuizItem = memo(
           />
         </Form.Item>
 
-        <Form.List name={[quizIndex, "questions"]}>
-          {(qFields, { add, remove: removeQ }) => (
+        <Form.List
+          name={[quizIndex, "questions"]}
+          rules={
+            isPreview
+              ? []
+              : [
+                  {
+                    validator: async (_, questions) => {
+                      if (!Array.isArray(questions) || questions.length === 0) {
+                        throw new Error("Bài kiểm tra cần ít nhất 1 câu hỏi");
+                      }
+                    },
+                  },
+                ]
+          }
+        >
+          {(qFields, { add, remove: removeQ }, meta) => (
             <div className="flex flex-col">
+              {!isPreview && meta.errors.length > 0 && (
+                <div className="mb-2">
+                  <Form.ErrorList errors={meta.errors} />
+                </div>
+              )}
               {qFields.length === 0 && (
                 <div className="text-center py-8 text-gray-400 border border-dashed rounded mb-4">
                   Chưa có câu hỏi nào

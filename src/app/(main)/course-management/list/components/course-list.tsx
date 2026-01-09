@@ -1,4 +1,13 @@
-import { Button, Table, Tag, Typography, Tooltip, Avatar, Spin } from "antd";
+import {
+  Button,
+  Table,
+  Tag,
+  Typography,
+  Tooltip,
+  Avatar,
+  
+  Skeleton,
+} from "antd";
 import type { TableProps, TablePaginationConfig } from "antd";
 import {
   PlusOutlined,
@@ -6,7 +15,7 @@ import {
   CalendarOutlined,
   SafetyCertificateOutlined,
   UserOutlined,
-  LoadingOutlined,
+  
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -282,11 +291,11 @@ export const CourseList = () => {
       </div>
 
       <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-        <Spin
-          spinning={isFetching}
-          indicator={<LoadingOutlined style={{ fontSize: 32 }} spin />}
-          tip="Đang tải dữ liệu..."
-        >
+        {isFetching ? (
+          <div className="p-4">
+            <Skeleton active paragraph={{ rows: 15 }} />
+          </div>
+        ) : (
           <Table
             columns={columns}
             dataSource={courseData}
@@ -307,7 +316,7 @@ export const CourseList = () => {
               emptyText: "Không có dữ liệu",
             }}
           />
-        </Spin>
+        )}
       </div>
     </div>
   );

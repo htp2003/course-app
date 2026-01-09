@@ -5,7 +5,7 @@ import {
   AuditOutlined,
   QuestionCircleOutlined,
 } from "@ant-design/icons";
-import type { TreeProps } from "antd/es/tree";
+import type { DataNode, TreeProps } from "antd/es/tree";
 import type { IChapter } from "../../../common/types/types";
 import { handleDropLogic } from "../../utils/tree-utils";
 import { useDebounce } from "../../../common/hooks/use-debounce";
@@ -17,44 +17,69 @@ interface TreeViewProps {
   isPreview?: boolean;
 }
 
+const notNull = <T,>(value: T | null | undefined): value is T =>
+  value !== null && value !== undefined;
+
 const TreeView = memo(
   ({ chapters, onSelect, onDrop, isPreview = false }: TreeViewProps) => {
     const treeData = useMemo(() => {
-      return chapters.map((chapter, cIdx) => ({
-        key: `${cIdx}`,
-        title: (
-          <span className="font-semibold">
-            {chapter.title || `Chương ${cIdx + 1}`}
-          </span>
-        ),
-        selectable: false,
-        children: chapter.lessons?.map((lesson, lIdx) => ({
-          key: `${cIdx}-${lIdx}`,
-          title: <span>{lesson.title || `Bài ${lIdx + 1}`}</span>,
-          children: lesson.quizzes?.map((quiz, qIdx) => ({
-            key: `${cIdx}-${lIdx}-${qIdx}`,
+      const data: DataNode[] = chapters
+        .map((chapter, cIdx): DataNode | null => {
+          const lessonNodes: DataNode[] = (chapter.lessons || [])
+            .map((lesson, lIdx): DataNode | null => {
+              const quizCount = lesson.quizzes?.length || 0;
+              if (isPreview && quizCount === 0) return null;
+              return {
+                key: `${cIdx}-${lIdx}`,
+                title: <span>{lesson.title || `Bài ${lIdx + 1}`}</span>,
+                children: (lesson.quizzes || []).map(
+                  (quiz, qIdx): DataNode => ({
+                    key: `${cIdx}-${lIdx}-${qIdx}`,
+                    title: (
+                      <span className="text-blue-600">
+                        {quiz.title || `Quiz ${qIdx + 1}`}
+                      </span>
+                    ),
+                    icon: <AuditOutlined className="text-blue-500" />,
+                    children: (quiz.questions || []).map(
+                      (question, questionIdx): DataNode => ({
+                        key: `${cIdx}-${lIdx}-${qIdx}-${questionIdx}`,
+                        title: (
+                          <span className="text-gray-600 text-sm">
+                            {question.title || `Câu hỏi ${questionIdx + 1}`}
+                          </span>
+                        ),
+                        icon: (
+                          <QuestionCircleOutlined className="text-gray-400" />
+                        ),
+                        isLeaf: true,
+                      })
+                    ),
+                  })
+                ),
+              };
+            })
+            .filter(notNull);
+
+          if (isPreview && lessonNodes.length === 0) return null;
+
+          return {
+            key: `${cIdx}`,
             title: (
-              <span className="text-blue-600">
-                {quiz.title || `Quiz ${qIdx + 1}`}
+              <span className="font-semibold">
+                {chapter.title || `Chương ${cIdx + 1}`}
               </span>
             ),
-            icon: <AuditOutlined className="text-blue-500" />,
-            children: quiz.questions?.map((question, questionIdx) => ({
-              key: `${cIdx}-${lIdx}-${qIdx}-${questionIdx}`,
-              title: (
-                <span className="text-gray-600 text-sm">
-                  {question.title || `Câu hỏi ${questionIdx + 1}`}
-                </span>
-              ),
-              icon: <QuestionCircleOutlined className="text-gray-400" />,
-              isLeaf: true,
-            })),
-          })),
-        })),
-      }));
-    }, [chapters]);
+            selectable: false,
+            children: lessonNodes,
+          };
+        })
+        .filter(notNull);
 
-    if (chapters.length === 0) return null;
+      return data;
+    }, [chapters, isPreview]);
+
+    if (chapters.length === 0 || treeData.length === 0) return null;
 
     return (
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-2 sticky top-4 max-h-[80vh] overflow-y-auto custom-scrollbar">

@@ -120,10 +120,10 @@ export const CourseList = () => {
       width: 300,
       fixed: "left",
       render: (text: string, record: TCourseRecord) => (
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-2">
           <Avatar
             shape="square"
-            size={48}
+            size={42}
             src={record.bannerUri}
             icon={<UserOutlined />}
             className="flex-shrink-0 bg-gray-200"
@@ -132,7 +132,11 @@ export const CourseList = () => {
             <span
               className="font-semibold text-gray-800 hover:text-indigo-600 cursor-pointer line-clamp-2"
               title={text}
-              onClick={() => navigate(`/course-management/detail/${record.id}`)}
+              onClick={() =>
+                navigate(`/course-management/detail/${record.id}`, {
+                  state: { courseName: record.title },
+                })
+              }
             >
               {text}
             </span>
@@ -244,7 +248,11 @@ export const CourseList = () => {
               type="text"
               size="small"
               icon={<EyeOutlined className="text-blue-500" />}
-              onClick={() => navigate(`/course-management/detail/${record.id}`)}
+              onClick={() =>
+                navigate(`/course-management/detail/${record.id}`, {
+                  state: { courseName: record.title },
+                })
+              }
             />
           </Tooltip>
         </div>
@@ -253,7 +261,7 @@ export const CourseList = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
+    <div className="p-4 space-y-4 animate-fade-in">
       <CourseFilter
         initialValues={params}
         onFilter={handleFilter}
@@ -261,12 +269,11 @@ export const CourseList = () => {
       />
 
       <div className="flex justify-between items-end">
-        <Typography.Title level={3} className="m-0 text-gray-800">
+        <Typography.Title level={4} className="m-0 text-gray-800">
           Quản lý khóa học
         </Typography.Title>
         <Button
           type="primary"
-          size="large"
           icon={<PlusOutlined />}
           onClick={() => navigate("/course-management/create")}
         >

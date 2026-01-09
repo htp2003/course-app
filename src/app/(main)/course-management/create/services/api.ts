@@ -45,6 +45,8 @@ export const uploadVideoChunkAPI = async (
   let start = 0;
   let partNumber = 1;
 
+  let lastReportedPercent = -1;
+
   let uploadId = "";
   let key = "";
   let tagString = "";
@@ -54,6 +56,7 @@ export const uploadVideoChunkAPI = async (
   while (start < totalSize) {
     const end = Math.min(start + CHUNK_SIZE, totalSize);
     const chunkBlob = file.slice(start, end);
+    const chunkSize = end - start;
 
     const isInit = partNumber === 1;
     const isLasted = end >= totalSize;
@@ -75,6 +78,19 @@ export const uploadVideoChunkAPI = async (
     try {
       const res = await apiClient.post(`${UPLOAD_BASE_URL}/videos`, formData, {
         headers: { "Content-Type": undefined },
+        onUploadProgress: (evt: any) => {
+          if (!onProgress) return;
+
+          const loaded = typeof evt?.loaded === "number" ? evt.loaded : 0;
+          const chunkLoaded = Math.min(Math.max(loaded, 0), chunkSize);
+          const totalUploaded = start + chunkLoaded;
+          const percent = Math.round((totalUploaded / totalSize) * 100);
+
+          if (percent !== lastReportedPercent) {
+            lastReportedPercent = percent;
+            onProgress(percent);
+          }
+        },
       });
 
       const responseData = extractData(res);
@@ -98,7 +114,10 @@ export const uploadVideoChunkAPI = async (
 
       if (onProgress) {
         const percent = Math.round((end / totalSize) * 100);
-        onProgress(percent);
+        if (percent !== lastReportedPercent) {
+          lastReportedPercent = percent;
+          onProgress(percent);
+        }
       }
 
       if (isLasted) {

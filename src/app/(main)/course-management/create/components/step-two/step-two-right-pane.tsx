@@ -21,10 +21,10 @@ export const StepTwoRightPane = memo(
                   <Empty description="Hãy bắt đầu xây dựng nội dung khóa học" />
                   <Button
                     type="primary"
-                    size="large"
+                    size="middle"
                     icon={<PlusOutlined />}
                     onClick={() => add({ title: "", lessons: [] })}
-                    className="mt-4"
+                    className="mt-3"
                   >
                     Tạo chương
                   </Button>
@@ -59,10 +59,10 @@ export const StepTwoRightPane = memo(
               {fields.length > 0 && !isPreview && (
                 <Button
                   type="dashed"
-                  size="large"
+                  size="middle"
                   onClick={() => add({ title: "", lessons: [] })}
                   block
-                  className="h-14 text-lg border-2 border-indigo-200 text-indigo-600 hover:border-indigo-400 hover:text-indigo-700"
+                  className="h-11 text-base border border-indigo-200 text-indigo-600 hover:border-indigo-400 hover:text-indigo-700"
                   icon={<FolderAddOutlined />}
                 >
                   Thêm chương mới

@@ -1,6 +1,6 @@
-import { Steps, Button, Card, Form, Grid, Alert, Spin } from "antd";
+import { Steps, Button, Card, Form, Grid, Spin } from "antd";
 import { useCourseForm } from "../hooks/use-course-form";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import {
   InfoCircleOutlined,
@@ -12,6 +12,7 @@ import {
   CheckOutlined,
 } from "@ant-design/icons";
 import { CourseInfoSection } from "./step-one/course-info-section";
+import { ValidationErrorsSummary } from "./common/validaton-errors-summary";
 import { lazy, Suspense } from "react";
 
 const StepTwoContent = lazy(() =>
@@ -50,6 +51,24 @@ export const CourseWizard = () => {
     handleFieldsChange,
     isFormDirty,
   } = useCourseForm();
+
+  const checkErrorInCurrentStep = useCallback((step: number) => {
+    const fields = form.getFieldsError();
+    const errorFields = fields.filter((f) => f.errors.length > 0);
+
+    return errorFields.some((f) => {
+      const namePath = f.name;
+      if (step === 0) return namePath[0] !== "chapters";
+      if (step === 1) return namePath[0] === "chapters" && !namePath.includes("quizzes");
+      if (step === 2) return namePath[0] === "chapters" && namePath.includes("quizzes");
+      return false;
+    });
+  }, [form]);
+
+  useEffect(() => {
+    const isError = checkErrorInCurrentStep(currentStep);
+    setHasValidationError(isError);
+  }, [currentStep, checkErrorInCurrentStep, setHasValidationError]);
 
   useEffect(() => {
     const handlePopState = (e: PopStateEvent) => {
@@ -111,24 +130,16 @@ export const CourseWizard = () => {
         initialValues={{
           chapters: [],
         }}
-        validateTrigger={false}
+        validateTrigger="onChange"
         onFieldsChange={() => {
           handleFieldsChange();
-          const hasError = form
-            .getFieldsError()
-            .some(({ errors }) => errors.length > 0);
-          setHasValidationError(hasError);
+          setHasValidationError(checkErrorInCurrentStep(currentStep));
         }}
       >
         {hasValidationError && currentStep < 3 && (
-          <div className="mb-4">
-            <Alert
-              type="error"
-              showIcon
-              message="Bạn còn trường bắt buộc chưa điền. Vui lòng kiểm tra lại."
-            />
-          </div>
+          <ValidationErrorsSummary currentStep={currentStep} />
         )}
+        
         <div className="min-h-[500px]">
           <div
             style={{ display: currentStep === 0 ? "block" : "none" }}

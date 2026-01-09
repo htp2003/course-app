@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Button,
   Spin,
-  Typography,
   FloatButton,
   Form,
   Modal,
@@ -25,11 +24,10 @@ import {
 
 import type { ICreateCourseForm } from "../common/types/types";
 
-const { Title } = Typography;
-
 export const CourseDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [form] = Form.useForm<ICreateCourseForm>();
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<number | undefined>();
@@ -57,6 +55,30 @@ export const CourseDetailPage = () => {
   });
 
   const apiData = response?.data;
+
+  useEffect(() => {
+    if (!apiData) return;
+
+    const state = (location.state ?? {}) as Record<string, unknown>;
+    const existingName = state.courseName;
+    if (typeof existingName === "string" && existingName.trim()) return;
+
+    const nameCandidate =
+      (apiData as any)?.title ??
+      (apiData as any)?.name ??
+      (apiData as any)?.courseName;
+    const courseName =
+      typeof nameCandidate === "string" && nameCandidate.trim()
+        ? nameCandidate.trim()
+        : undefined;
+
+    if (!courseName) return;
+
+    navigate(location.pathname, {
+      replace: true,
+      state: { ...state, courseName },
+    });
+  }, [apiData, location.pathname, location.state, navigate]);
 
   const previewData: ICreateCourseForm | undefined = useMemo(() => {
     if (!apiData) return undefined;
@@ -122,13 +144,6 @@ export const CourseDetailPage = () => {
             </Button>
           )}
         </div>
-      </div>
-
-      <div className="mb-8 text-center">
-        <Title level={3} className="text-gray-500 m-0 uppercase tracking-wide">
-          Chi tiết khóa học
-        </Title>
-        <div className="text-gray-400 text-xs mt-1">ID: {id}</div>
       </div>
 
       <Form form={form} initialValues={previewData} layout="vertical">

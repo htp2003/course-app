@@ -10,6 +10,7 @@ import {
   Radio,
 } from "antd";
 import { FileImageOutlined, TrophyOutlined } from "@ant-design/icons";
+import type { Dayjs } from "dayjs";
 import { TiptapEditorWrapper as TiptapEditor } from "../common/tiptap-editor-lazy";
 import { ImageUpload } from "../common/image-upload";
 import {
@@ -208,6 +209,14 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
               {({ getFieldValue }) => {
                 const timeType = getFieldValue("timeStateType");
                 const publishAt = getFieldValue("publishAt");
+                const disableCourseRangeDate = (current: Dayjs) => {
+                  if (!current) return false;
+                  if (disablePastDates(current)) return true;
+                  if (publishAt) {
+                    return current.isBefore(publishAt.startOf("day"));
+                  }
+                  return false;
+                };
                 return timeType === COURSE_TIME_STATE_TYPE.CUSTOMIZE.value ? (
                   <Form.Item
                     name="timeRange"
@@ -250,7 +259,7 @@ export const CourseInfoSection = ({ isPreview = false }: Props) => {
                         "Thời gian diễn ra đến",
                       ]}
                       className="w-full"
-                      disabledDate={disablePastDates}
+                      disabledDate={disableCourseRangeDate}
                       disabled={isPreview}
                     />
                   </Form.Item>

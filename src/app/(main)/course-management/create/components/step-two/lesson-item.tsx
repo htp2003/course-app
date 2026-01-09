@@ -139,7 +139,8 @@ export const LessonItem = memo(
             </Popconfirm>
           )
         }
-        className="group relative bg-slate-50 rounded-xl border border-slate-200 p-4 mb-4 hover:border-blue-300 hover:shadow-md transition-all duration-300"
+        className="group relative bg-slate-50 rounded-xl border border-slate-200 p-3 mb-4 hover:border-blue-300 hover:shadow-md transition-all duration-300"
+        styles={{ body: { padding: 12 } }}
       >
         <div className="mb-4 pl-2">
           <Row gutter={[16, 16]} align="middle">
@@ -153,16 +154,11 @@ export const LessonItem = memo(
                   isPreview
                     ? []
                     : [
-                        { required: true, message: "Nhập tên" },
+                        { required: true, message: "Nhập tên bài học" },
+                        { min: 3, message: "Tên bài học tối thiểu 3 ký tự" },
                         {
-                          validator: (_, value) => {
-                            if (value && !value.trim()) {
-                              return Promise.reject(
-                                new Error("Vui lòng nhập tên bài học hợp lệ")
-                              );
-                            }
-                            return Promise.resolve();
-                          },
+                          whitespace: true,
+                          message: "Không được chỉ nhập khoảng trắng",
                         },
                       ]
                 }
@@ -342,7 +338,7 @@ export const LessonItem = memo(
                               : [
                                   {
                                     required: true,
-                                    message: "Vui lòng tải lên nội dung chính",
+                                    message: "Vui lòng tải lên tệp tin",
                                   },
                                 ]
                           }

@@ -17,3 +17,16 @@
 .tiptap-editor iframe[src*="youtu.be"] {
   margin: 8px 0;
 }
+
+/* Compact table styles for list pages */
+.compact-table .ant-table-cell,
+.compact-table .ant-table-thead > tr > th {
+  padding: 8px 12px !important;
+}
+.compact-table .ant-table-cell .ant-tag {
+  margin: 0 !important;
+  line-height: 1.2 !important;
+}
+.compact-table .ant-table-cell {
+  white-space: nowrap;
+}

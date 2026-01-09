@@ -58,7 +58,7 @@ export const deserializeFile = (file: UploadFile): UploadFile | null => {
 export const normalizeEssayQuestions = (
   data: ICreateCourseForm
 ): ICreateCourseForm => {
-  const cloned = structuredClone(data) as ICreateCourseForm;
+  const cloned = { ...data };
 
   cloned.chapters = (cloned.chapters || []).map((chap) => ({
     ...chap,

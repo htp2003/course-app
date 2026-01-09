@@ -1,4 +1,4 @@
-import { Form, Typography, Empty } from "antd";
+import { Form, Empty } from "antd";
 import { CourseInfoSection } from "../step-one/course-info-section";
 import { StepTwoContent } from "../step-two/step-two-content";
 import { StepThreeContent } from "../step-three/step-three-content";
@@ -20,15 +20,6 @@ export const StepFourContent = ({ isPreview = true }: Props) => {
   return (
     <div className="animate-fade-in pb-10">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <Typography.Title level={3} className="text-gray-700 m-0">
-            Xem trước khóa học
-          </Typography.Title>
-          <Typography.Text type="secondary">
-            Kiểm tra toàn bộ thông tin và nội dung khóa học trước khi xuất bản
-          </Typography.Text>
-        </div>
-
         <CourseInfoSection isPreview={isPreview} />
 
         <div className="mt-10">

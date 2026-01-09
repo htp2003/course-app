@@ -33,9 +33,9 @@ export const ChapterItem = memo(
     return (
       <Card
         className="shadow-sm border-indigo-100 hover:shadow-md transition-shadow duration-300"
-        styles={{ body: { padding: "16px" } }}
+        styles={{ body: { padding: 12 } }}
       >
-        <div className="flex items-center gap-3 mb-4 p-2 bg-indigo-50/50 rounded-lg border border-indigo-100">
+        <div className="flex items-center gap-3 mb-3 p-2 bg-indigo-50/50 rounded-lg border border-indigo-100">
           <Form.Item
             label="Tên chương"
             colon={false}
@@ -47,6 +47,7 @@ export const ChapterItem = memo(
                 ? []
                 : [
                     { required: true, message: "Nhập tên chương" },
+                    { min: 3, message: "Tên chương phải có ít nhất 3 ký tự" },
                     {
                       validator: (_, value) => {
                         if (value && !value.trim()) {
@@ -62,10 +63,9 @@ export const ChapterItem = memo(
             className="mb-0 flex-1"
           >
             <Input
-              size="large"
+              size="middle"
               placeholder="Ví dụ: Giới thiệu khóa học..."
-              className="font-medium text-gray-700 bg-white border-indigo-200 focus:border-indigo-500"
-              variant="filled"
+              className="text-gray-700"
               disabled={isPreview}
               onBlur={(e) => {
                 e.target.value = e.target.value.trim();
@@ -123,12 +123,13 @@ export const ChapterItem = memo(
                 {!isPreview && (
                   <Button
                     type="dashed"
+                    size="middle"
                     onClick={() =>
                       add({ title: "", type: "video", duration: 0 })
                     }
                     block
                     icon={<PlusOutlined />}
-                    className="mt-2 text-indigo-500 border-indigo-300 border-dashed hover:text-indigo-700 hover:border-indigo-500 hover:bg-indigo-50 h-10"
+                    className="mt-2 text-indigo-500 border-indigo-300 border-dashed hover:text-indigo-700 hover:border-indigo-500 hover:bg-indigo-50"
                   >
                     Thêm bài học mới
                   </Button>

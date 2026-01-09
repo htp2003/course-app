@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { ConfigProvider, App as AntdApp, Spin } from "antd";
 import { MainLayout } from "./components/layouts/main-layout";
 import { ProtectedRoute } from "./components/auth/protected-route";
+import { PublicRoute } from "./components/auth/public-route";
 import { LoginPage } from "./app/(auth)/login/page";
 
 const CourseListPage = lazy(
@@ -26,6 +27,7 @@ const PageLoader = () => (
 function App() {
   return (
     <ConfigProvider
+      componentSize="small"
       theme={{
         token: {
           colorPrimary: "#4F46E5",
@@ -44,12 +46,19 @@ function App() {
             darkItemColor: "#94A3B8",
             darkItemSelectedColor: "#FFFFFF",
           },
+          Form: {
+            itemMarginBottom: 10,
+            verticalLabelPadding: "0 0 6px",
+          },
         },
       }}
     >
       <AntdApp>
         <Routes>
-          <Route path="/login" element={<LoginPage />} />
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/course-management/login" element={<LoginPage />} />
+          </Route>
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
               <Route

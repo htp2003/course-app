@@ -2,13 +2,16 @@ import { useEffect, useMemo, memo, useRef } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { RichTextProvider } from "reactjs-tiptap-editor";
 import "reactjs-tiptap-editor/style.css";
+import "react-image-crop/dist/ReactCrop.css";
+
 import { Document } from "@tiptap/extension-document";
 import { Paragraph } from "@tiptap/extension-paragraph";
 import { Text } from "@tiptap/extension-text";
 import { TextStyle } from "@tiptap/extension-text-style";
-import { Dropcursor, Gapcursor, TrailingNode } from "@tiptap/extensions";
+import { Dropcursor, Gapcursor } from "@tiptap/extensions";
 import { HardBreak } from "@tiptap/extension-hard-break";
 import { ListItem } from "@tiptap/extension-list";
+
 import {
   History,
   RichTextRedo,
@@ -46,6 +49,10 @@ import {
   RichTextBubbleText,
 } from "reactjs-tiptap-editor/bubble";
 import Youtube from "@tiptap/extension-youtube";
+import { Image, RichTextImage } from "reactjs-tiptap-editor/image";
+import { Video, RichTextVideo } from "reactjs-tiptap-editor/video";
+
+import { uploadImageAPI, uploadVideoChunkAPI } from "../../services/api";
 
 const YOUTUBE_ID_REGEX =
   /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})(?:[&#?].*)?$/i;
@@ -61,6 +68,56 @@ const toYouTubeEmbedUrl = (url: string, nocookie = true) => {
   return `https://www.youtube${nocookie ? "-nocookie" : ""}.com/embed/${id}`;
 };
 
+/**
+ * Hàm dọn dẹp HTML dư thừa để tránh tự chèn thẻ <p>
+ */
+const normalizeEditorHtml = (html: string): string => {
+  if (!html || html === "<p></p>") return "";
+
+  const normalized = html
+    .replace(/<p>[\s\u00A0]*<br\s*\/?>[\s\u00A0]*<\/p>/g, "")
+    .replace(/<p>[\s\u00A0]*<\/p>/g, "")
+    .replace(/<p>\s*(<div[^>]*>.*?<\/div>)\s*<\/p>/gs, "$1")
+    .replace(/(<p><\/p>){2,}/g, "<p></p>");
+
+  return normalized.trim();
+};
+
+const extractUploadedUrl = (payload: unknown): string => {
+  if (typeof payload === "string") return payload;
+  if (!payload || typeof payload !== "object") return "";
+
+  const preferredKeys = ["compressUrl", "rawUrl", "url", "uri"] as const;
+  const visited = new Set<unknown>();
+  const queue: unknown[] = [payload];
+  let steps = 0;
+  const MAX_STEPS = 200;
+
+  while (queue.length > 0 && steps < MAX_STEPS) {
+    const current = queue.shift();
+    steps++;
+    if (!current || typeof current !== "object") continue;
+    if (visited.has(current)) continue;
+    visited.add(current);
+
+    const obj = current as Record<string, unknown>;
+    for (const key of preferredKeys) {
+      const value = obj[key];
+      if (typeof value === "string" && value) return value;
+    }
+
+    for (const value of Object.values(obj)) {
+      if (!value || typeof value === "string") continue;
+      if (Array.isArray(value)) {
+        for (const item of value) queue.push(item);
+        continue;
+      }
+      if (typeof value === "object") queue.push(value);
+    }
+  }
+  return "";
+};
+
 const baseExtensions = [
   Document,
   Text,
@@ -69,7 +126,6 @@ const baseExtensions = [
   Dropcursor,
   Gapcursor,
   HardBreak,
-  TrailingNode,
   ListItem,
   History,
   Bold,
@@ -87,6 +143,24 @@ const baseExtensions = [
   OrderedList,
   Emoji,
   Link.configure({ openOnClick: false }),
+  Image.configure({
+    resourceImage: "both",
+    upload: async (file: File) => {
+      const res = await uploadImageAPI(file);
+      const url = extractUploadedUrl(res);
+      if (!url) throw new Error("Upload image: missing URL");
+      return url;
+    },
+  }),
+  Video.configure({
+    resourceVideo: "both",
+    upload: async (file: File) => {
+      const res = await uploadVideoChunkAPI(file);
+      const url = extractUploadedUrl(res);
+      if (!url) throw new Error("Upload video: missing URL");
+      return url;
+    },
+  }),
   Youtube.configure({ nocookie: true, controls: true }),
 ];
 
@@ -119,6 +193,8 @@ const CustomToolbar = memo(() => (
       <RichTextOrderedList />
     </div>
     <div className="flex gap-1">
+      <RichTextImage />
+      <RichTextVideo />
       <RichTextLink />
     </div>
   </div>
@@ -134,7 +210,6 @@ interface Props {
 export const TiptapEditor = memo(
   ({ value, onChange, isPreview = false, onBlur }: Props) => {
     const isInternalUpdate = useRef(false);
-
     const extensions = useMemo(() => [...baseExtensions], []);
 
     const editor = useEditor(
@@ -147,19 +222,23 @@ export const TiptapEditor = memo(
         editorProps: {
           attributes: {
             class: [
-              "prose prose-sm max-w-none min-h-[250px] p-4 focus:outline-none transition-all selection:bg-blue-600 selection:text-white text-slate-900",
+              "prose prose-sm max-w-none min-h-[250px] max-h-[500px] overflow-y-auto p-4 focus:outline-none transition-all selection:bg-blue-600 selection:text-white text-slate-900",
               isPreview ? "bg-gray-50/50 cursor-default" : "bg-white",
             ].join(" "),
           },
         },
         onUpdate: ({ editor }) => {
           const html = editor.getHTML();
-          if (html !== value) {
+          const normalized = normalizeEditorHtml(html);
+          const currentPropValue = normalizeEditorHtml(value ?? "");
+
+          if (normalized !== currentPropValue) {
             isInternalUpdate.current = true;
-            onChange?.(html);
+            onChange?.(normalized);
+
             setTimeout(() => {
               isInternalUpdate.current = false;
-            }, 0);
+            }, 50);
           }
         },
         onBlur: () => {
@@ -171,10 +250,13 @@ export const TiptapEditor = memo(
 
     useEffect(() => {
       if (editor && value !== undefined && !isInternalUpdate.current) {
-        const currentContent = editor.getHTML();
-        const normalizedValue = value === "" ? "<p></p>" : value;
-        if (currentContent !== normalizedValue) {
-          editor.commands.setContent(value, { emitUpdate: false });
+        const currentEditorContent = normalizeEditorHtml(editor.getHTML());
+        const incomingValue = normalizeEditorHtml(value);
+
+        if (currentEditorContent !== incomingValue) {
+          editor.commands.setContent(incomingValue || "<p></p>", {
+            emitUpdate: false,
+          });
         }
       }
     }, [value, editor]);

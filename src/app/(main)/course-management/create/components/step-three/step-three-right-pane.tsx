@@ -10,7 +10,7 @@ interface Props {
 
 interface ChaptersProp {
   title?: string;
-  lessons?: { title?: string }[];
+  lessons?: { title?: string; quizzes?: unknown[] }[];
 }
 
 const structureSignature = (chapters?: ChaptersProp[]) => {
@@ -40,10 +40,18 @@ const RightPaneBody = memo(
       if (!chapters?.length) return null;
       for (let c = 0; c < chapters.length; c += 1) {
         const lessons = chapters[c]?.lessons || [];
-        if (lessons.length) return `${c}-0`;
+        if (!lessons.length) continue;
+
+        if (!isPreview) return `${c}-0`;
+
+        for (let l = 0; l < lessons.length; l += 1) {
+          const quizCount = (lessons[l]?.quizzes as unknown[] | undefined)
+            ?.length;
+          if ((quizCount || 0) > 0) return `${c}-${l}`;
+        }
       }
       return null;
-    }, [chapters]);
+    }, [chapters, isPreview]);
 
     useEffect(() => {
       if (!selectedKey && firstValidKey) {
@@ -60,27 +68,51 @@ const RightPaneBody = memo(
 
     const chapterOptions = useMemo(
       () =>
-        (chapters || []).map((ch, idx) => ({
-          label: ch?.title?.trim() || `Chương ${idx + 1}`,
-          value: idx,
-        })),
-      [chapters]
+        (chapters || [])
+          .map((ch, idx) => {
+            if (!isPreview) {
+              return {
+                label: ch?.title?.trim() || `Chương ${idx + 1}`,
+                value: idx,
+              };
+            }
+
+            const lessons = ch?.lessons || [];
+            const hasAnyQuizLesson = lessons.some(
+              (ls) => (ls?.quizzes?.length || 0) > 0
+            );
+            if (!hasAnyQuizLesson) return null;
+
+            return {
+              label: ch?.title?.trim() || `Chương ${idx + 1}`,
+              value: idx,
+            };
+          })
+          .filter(Boolean) as { label: string; value: number }[],
+      [chapters, isPreview]
     );
 
     const lessonOptions = useMemo(() => {
       if (selectedChapterIdx === undefined)
         return [] as { label: string; value: number }[];
       const lessons = chapters?.[selectedChapterIdx]?.lessons || [];
-      return lessons.map((ls, idx) => ({
-        label: ls?.title?.trim() || `Bài ${idx + 1}`,
-        value: idx,
-      }));
-    }, [chapters, selectedChapterIdx]);
+      return lessons
+        .map((ls, idx) => {
+          if (isPreview && (ls?.quizzes?.length || 0) === 0) return null;
+          return {
+            label: ls?.title?.trim() || `Bài ${idx + 1}`,
+            value: idx,
+          };
+        })
+        .filter(Boolean) as { label: string; value: number }[];
+    }, [chapters, selectedChapterIdx, isPreview]);
 
     const handleChapterChange = (chapterIdx: number) => {
       const lessons = chapters?.[chapterIdx]?.lessons || [];
-      const nextLessonIdx = lessons.length ? 0 : 0;
-      onSelectNode(`${chapterIdx}-${nextLessonIdx}`);
+      const nextLessonIdx = !isPreview
+        ? 0
+        : lessons.findIndex((ls) => (ls?.quizzes?.length || 0) > 0);
+      onSelectNode(`${chapterIdx}-${nextLessonIdx >= 0 ? nextLessonIdx : 0}`);
     };
 
     const handleLessonChange = (lessonIdx: number) => {
@@ -112,7 +144,7 @@ const RightPaneBody = memo(
               value={selectedChapterIdx}
               onChange={handleChapterChange}
               className="w-full"
-            // disabled={isPreview}
+              // disabled={isPreview}
             />
           </div>
           <div className="flex flex-col gap-2 min-w-[260px]">

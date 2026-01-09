@@ -1,4 +1,14 @@
-import { Button, Col, DatePicker, Form, Input, Row, Select, Card } from "antd";
+import {
+  Button,
+  Col,
+  DatePicker,
+  Form,
+  Input,
+  Row,
+  Select,
+  Card,
+  ConfigProvider,
+} from "antd";
 import {
   SearchOutlined,
   ReloadOutlined,
@@ -88,99 +98,100 @@ export const CourseFilter = ({ initialValues, onFilter, loading }: Props) => {
   const colProps = { xs: 24, sm: 12, md: 8, lg: 6 };
 
   return (
-    <Card
-      title="Bộ lọc tìm kiếm"
-      className="shadow-sm border-gray-200 mb-6"
-      size="small"
-      bodyStyle={{ padding: "20px 24px 10px 24px" }}
-    >
-      <Form
-        form={form}
-        layout="vertical"
-        initialValues={defaultValues}
-        onFinish={handleFinish}
+    <ConfigProvider componentSize="middle">
+      <Card
+        className="shadow-sm border-gray-200 mb-4"
+        size="small"
+        styles={{ body: { padding: "10px 16px" } }}
       >
-        <Row gutter={[24, 0]}>
-          <Col {...colProps}>
-            <Form.Item name="Title" label="Từ khóa">
-              <Input
-                placeholder="Tên khóa học..."
-                prefix={<SearchOutlined className="text-gray-400" />}
-                allowClear
-              />
-            </Form.Item>
-          </Col>
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={defaultValues}
+          onFinish={handleFinish}
+        >
+          <Row gutter={[12, 0]}>
+            <Col {...colProps}>
+              <Form.Item name="Title">
+                <Input
+                  placeholder="Tên khóa học..."
+                  prefix={<SearchOutlined className="text-gray-400" />}
+                  allowClear
+                />
+              </Form.Item>
+            </Col>
 
-          <Col {...colProps}>
-            <Form.Item name="Topics" label="Chủ đề">
-              <Select
-                mode="multiple"
-                placeholder="Chọn chủ đề"
-                allowClear
-                showSearch
-                maxTagCount="responsive"
-                options={COURSE_CATEGORIES}
-                notFoundContent="Không tìm thấy chủ đề"
-                filterOption={(input, option) =>
-                  (option?.label ?? "")
-                    .toLowerCase()
-                    .includes(input.toLowerCase())
-                }
-              />
-            </Form.Item>
-          </Col>
+            <Col {...colProps}>
+              <Form.Item name="Topics">
+                <Select
+                  mode="multiple"
+                  placeholder="Chọn chủ đề"
+                  allowClear
+                  showSearch
+                  maxTagCount="responsive"
+                  options={COURSE_CATEGORIES}
+                  notFoundContent="Không tìm thấy chủ đề"
+                  filterOption={(input, option) =>
+                    (option?.label ?? "")
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                />
+              </Form.Item>
+            </Col>
 
-          <Col {...colProps}>
-            <Form.Item name="Status" label="Trạng thái">
-              <Select
-                placeholder="Tất cả"
-                allowClear
-                options={COURSE_STATUS_LIST}
-                fieldNames={{ label: "label", value: "value" }}
-              />
-            </Form.Item>
-          </Col>
+            <Col {...colProps}>
+              <Form.Item name="Status">
+                <Select
+                  placeholder="Tất cả"
+                  allowClear
+                  options={COURSE_STATUS_LIST}
+                  fieldNames={{ label: "label", value: "value" }}
+                />
+              </Form.Item>
+            </Col>
 
-          <Col {...colProps}>
-            <Form.Item name="Type" label="Loại khóa học">
-              <Select
-                placeholder="Tất cả"
-                allowClear
-                options={COURSE_TYPE_LIST}
-                fieldNames={{ label: "label", value: "value" }}
-              />
-            </Form.Item>
-          </Col>
+            <Col {...colProps}>
+              <Form.Item name="Type">
+                <Select
+                  placeholder="Tất cả"
+                  allowClear
+                  options={COURSE_TYPE_LIST}
+                  fieldNames={{ label: "label", value: "value" }}
+                />
+              </Form.Item>
+            </Col>
 
-          <Col {...colProps}>
-            <Form.Item name="dateRange" label="Thời gian diễn ra">
-              <RangePicker
-                format="DD/MM/YYYY"
-                placeholder={["Từ ngày", "Đến ngày"]}
-                className="w-full"
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+            <Col {...colProps}>
+              <Form.Item name="dateRange">
+                <RangePicker
+                  format="DD/MM/YYYY"
+                  placeholder={["Từ ngày", "Đến ngày"]}
+                  className="w-full"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-        <Row className="mt-[-10px] mb-4">
-          <Col span={24} className="flex justify-end">
-            <div className="flex gap-2">
-              <Button icon={<ReloadOutlined />} onClick={handleReset}>
-                Làm mới
-              </Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                icon={<FilterOutlined />}
-                loading={loading}
-              >
-                Lọc kết quả
-              </Button>
-            </div>
-          </Col>
-        </Row>
-      </Form>
-    </Card>
+          <Row className="mt-0 mb-2">
+            <Col span={24} className="flex justify-end">
+              <div className="flex gap-2">
+                <Button icon={<ReloadOutlined />} onClick={handleReset}>
+                  Làm mới
+                </Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  icon={<FilterOutlined />}
+                  loading={loading}
+                >
+                  Lọc kết quả
+                </Button>
+              </div>
+            </Col>
+          </Row>
+        </Form>
+      </Card>
+    </ConfigProvider>
   );
 };

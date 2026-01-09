@@ -1,13 +1,16 @@
-import { useState, useCallback } from "react";
-import { Row, Col, Affix, Typography } from "antd";
+import { useState, useCallback, useMemo } from "react";
+import { Row, Col, Affix, Typography, Form } from "antd";
 import { QuizSidebarTree } from "./quiz-sidebar-tree";
 import { StepThreeRightPane } from "./step-three-right-pane";
+import type { IChapter } from "../../../common/types/types";
 
 interface Props {
   isPreview?: boolean;
 }
 
 export const StepThreeContent = ({ isPreview = false }: Props) => {
+  const form = Form.useFormInstance();
+  const chapters = (Form.useWatch("chapters", form) as IChapter[]) || [];
   const [selectedNodeKey, setSelectedNodeKey] = useState<string | null>(null);
   const handleSelectNode = useCallback(
     (key: string, options?: { scroll?: boolean }) => {
@@ -23,6 +26,16 @@ export const StepThreeContent = ({ isPreview = false }: Props) => {
     },
     []
   );
+
+  const hasAnyQuiz = useMemo(() => {
+    return chapters.some((chapter) =>
+      (chapter.lessons || []).some(
+        (lesson) => (lesson.quizzes?.length || 0) > 0
+      )
+    );
+  }, [chapters]);
+
+  if (isPreview && !hasAnyQuiz) return null;
 
   const treeContent = (
     <QuizSidebarTree onSelectNode={handleSelectNode} isPreview={isPreview} />

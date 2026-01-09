@@ -24,6 +24,8 @@ export interface IQuestion {
   explanation?: string;
 
   keywords?: string[];
+  singleChoiceState?: number;
+  multipleChoiceState?: boolean[];
 }
 
 export interface IQuiz {

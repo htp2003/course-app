@@ -98,6 +98,7 @@ export const LessonItem = memo(
     isPreview = false,
   }: Props) => {
     const { message } = App.useApp();
+    const form = Form.useFormInstance();
 
     const onRemoveLesson = useCallback(() => {
       if (totalLessons <= 1) {
@@ -107,7 +108,33 @@ export const LessonItem = memo(
       remove(lessonIndex);
     }, [remove, lessonIndex, totalLessons, message]);
 
-    const handleTypeChange = useCallback(() => {}, []);
+    const handleTypeChange = useCallback(() => {
+      if (form) {
+        const currentFields = form.getFieldsError();
+        const fieldsToUpdate = currentFields
+          .filter((field) => {
+            const namePath = field.name;
+            const isCurrentLessonField =
+              namePath[0] === "chapters" &&
+              namePath[1] === chapterIndex &&
+              namePath[2] === "lessons" &&
+              namePath[3] === lessonIndex &&
+              ["videoFile", "docFile", "slideFile"].includes(
+                namePath[4] as string
+              );
+
+            return isCurrentLessonField && field.errors.length > 0;
+          })
+          .map((field) => ({
+            name: field.name,
+            errors: [],
+          }));
+
+        if (fieldsToUpdate.length > 0) {
+          form.setFields(fieldsToUpdate);
+        }
+      }
+    }, [form, chapterIndex, lessonIndex]);
 
     return (
       <Card

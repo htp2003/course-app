@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getToken, clearAllAuth } from "../utils/token-storage";
 
 const baseURL = import.meta.env.VITE_API_URL;
 
@@ -11,7 +12,7 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("access_token");
+    const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -28,15 +29,17 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("user_info");
+      clearAllAuth();
 
-      window.location.href = "/login";
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
 
-    const message =
+    const errorMessage =
       error.response?.data?.message || error.message || "Lỗi hệ thống";
-    return Promise.reject(message);
+
+    return Promise.reject(errorMessage);
   }
 );
 

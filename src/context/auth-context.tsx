@@ -6,6 +6,13 @@ import {
   type ReactNode,
 } from "react";
 import { loginAPI } from "../app/(auth)/login/services/api";
+import {
+  getToken,
+  setToken,
+  getUser,
+  setUser as setUserStorage,
+  clearAllAuth,
+} from "../utils/token-storage";
 
 export interface TUserProfile {
   id: string | number;
@@ -38,40 +45,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    const savedUser = localStorage.getItem("user_info");
+    const token = getToken();
+    const savedUserJson = getUser();
 
     if (token) {
       setIsAuthenticated(true);
 
-      if (savedUser) {
-        setUser(JSON.parse(savedUser));
+      if (savedUserJson) {
+        try {
+          const userInfo = JSON.parse(savedUserJson);
+          setUser(userInfo);
+        } catch (error) {
+          console.error("Lỗi khi parse user info:", error);
+          clearAllAuth();
+        }
       } else {
         fetchMe();
       }
     }
+
     setIsLoading(false);
   }, []);
 
   const login = (token: string, userInfo: TUserProfile) => {
-    localStorage.setItem("access_token", token);
-    localStorage.setItem("user_info", JSON.stringify(userInfo));
+    setToken(token);
+
+    setUserStorage(JSON.stringify(userInfo));
 
     setIsAuthenticated(true);
     setUser(userInfo);
   };
 
   const logout = async () => {
-    const token = localStorage.getItem("access_token");
+    const token = getToken();
 
     try {
       if (token) {
         await loginAPI.logout(token);
       }
     } catch (error) {
+      console.error("Lỗi logout API:", error);
     } finally {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("user_info");
+      clearAllAuth();
 
       setIsAuthenticated(false);
       setUser(null);
@@ -81,6 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
   };
+
   return (
     <AuthContext.Provider
       value={{ isAuthenticated, user, login, logout, isLoading }}

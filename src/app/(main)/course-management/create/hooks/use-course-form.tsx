@@ -80,7 +80,7 @@ interface ICourseApiPayload {
 }
 
 const DRAFT_KEY = "course_create_draft_v1";
-const AUTOSAVE_INTERVAL_MS = 1000 * 60;
+const AUTOSAVE_INTERVAL_MS = 5000;
 const PASS_RATE_MIN = 0;
 const PASS_RATE_MAX = 100;
 

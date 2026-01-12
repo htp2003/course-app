@@ -1,4 +1,5 @@
 import apiClient from "../../../../../services/api-client";
+import { retryAsync } from "../../../../../utils/retry-async";
 import type { IUploadResponse } from "../../common/types/api-response";
 
 const UPLOAD_BASE_URL = import.meta.env.VITE_UPLOAD_API_URL;
@@ -76,22 +77,33 @@ export const uploadVideoChunkAPI = async (
     }
 
     try {
-      const res = await apiClient.post(`${UPLOAD_BASE_URL}/videos`, formData, {
-        headers: { "Content-Type": undefined },
-        onUploadProgress: (evt: any) => {
-          if (!onProgress) return;
+      const res = await retryAsync(
+        () =>
+          apiClient.post(`${UPLOAD_BASE_URL}/videos`, formData, {
+            headers: { "Content-Type": undefined },
+            onUploadProgress: (evt: any) => {
+              if (!onProgress) return;
 
-          const loaded = typeof evt?.loaded === "number" ? evt.loaded : 0;
-          const chunkLoaded = Math.min(Math.max(loaded, 0), chunkSize);
-          const totalUploaded = start + chunkLoaded;
-          const percent = Math.round((totalUploaded / totalSize) * 100);
+              const loaded = typeof evt?.loaded === "number" ? evt.loaded : 0;
+              const chunkLoaded = Math.min(Math.max(loaded, 0), chunkSize);
+              const totalUploaded = start + chunkLoaded;
+              const percent = Math.round((totalUploaded / totalSize) * 100);
 
-          if (percent !== lastReportedPercent) {
-            lastReportedPercent = percent;
-            onProgress(percent);
-          }
-        },
-      });
+              if (percent !== lastReportedPercent) {
+                lastReportedPercent = percent;
+                onProgress(percent);
+              }
+            },
+          }),
+        3,
+        1000,
+        (attempt, error) => {
+          console.warn(
+            `Chunk ${partNumber} upload retry lần ${attempt}:`,
+            error
+          );
+        }
+      );
 
       const responseData = extractData(res);
 
@@ -127,8 +139,15 @@ export const uploadVideoChunkAPI = async (
       start = end;
       partNumber++;
     } catch (error) {
-      console.error(`Upload error at chunk ${partNumber}:`, error);
-      throw error;
+      console.error(
+        `Upload failed at chunk ${partNumber} sau tất cả retries:`,
+        error
+      );
+      throw new Error(
+        `Chunk ${partNumber} upload thất bại. Lỗi: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
 
